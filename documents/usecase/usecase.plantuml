@@ -1,0 +1,25 @@
+@startuml
+skinparam actorStyle Hollow
+:User: --> (Use)
+"Main Admin" as Admin
+"Use the web application" as (Use)
+(Use) --> (home) 
+"home page" as (home)
+(home) --> (view content)
+(home) --> (Login)
+(home) --> (Sign up)
+
+rectangle Login_Signup {
+(Login) --> (Login Form)
+(Sign up) --> (Sign up Form)
+(Sign up Form) --> (Login Form)
+(Sign up Form) --> (create account)
+(create account) --> (Login Form)
+(Login Form) --> (Sign up Form)
+(Login Form) --> (authenticate user)
+(authenticate user) --> (access account)
+}
+(access account) --> (view content)
+
+Admin --> (Admin the web application)
+@enduml
