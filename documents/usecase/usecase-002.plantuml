@@ -1,0 +1,12 @@
+@startuml
+skinparam actorStyle Hollow
+:User:
+
+
+rectangle webapp {
+User -- (view content)
+User -- (Login)
+User -- (Sign Up)
+User -- (Make purchase)
+}
+@enduml
