@@ -1,22 +1,26 @@
-version: '3.8'
+version: "3.9"
 
 services:
   postgres:
     image: postgres:latest
     container_name: postgres
+    env_file:
+      - .env
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data 
     ports:
-      - "5433:5432" 
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
     restart: unless-stopped
 
   pgadmin:
-    image: dpage/pgadmin4:latest
+    image: dpage/pgadmin4
     container_name: pgadmin
+    env_file:
+      - .env
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
@@ -25,6 +29,7 @@ services:
     depends_on:
       - postgres
     restart: unless-stopped
+
 
 volumes:
   postgres_data:
