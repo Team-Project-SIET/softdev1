@@ -1,4 +1,7 @@
-import { pgTable, uuid, varchar, timestamp, pgEnum } from 'drizzle-orm/pg-core'
+import {
+  pgTable, uuid, varchar,
+  timestamp, pgEnum
+} from 'drizzle-orm/pg-core'
 
 export const roleEnum = pgEnum('role', ['admin', 'driver', 'executive', 'customer'])
 export const oauthProviderEnum = pgEnum('oauth_provider', ['google', 'line'])
@@ -10,7 +13,7 @@ export const users = pgTable('users', {
   role: roleEnum('role').notNull().default('customer'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull()
-    .$onUpdateFn(() => new Date()),
+    .$onUpdate(() => new Date()),
 })
 
 export const oauthAccounts = pgTable('oauth_accounts', {
@@ -19,7 +22,7 @@ export const oauthAccounts = pgTable('oauth_accounts', {
     .references(() => users.id, { onDelete: 'cascade' }),
   provider: oauthProviderEnum('provider').notNull(),
   providerAccountId: varchar('provider_account_id', { length: 255 }).notNull(),
-  lineUserId: varchar('line_user_id', { length: 255 }), // ← สำคัญ! ใช้ Push LINE
+  lineUserId: varchar('line_user_id', { length: 255 }),
   accessToken: varchar('access_token', { length: 500 }),
   refreshToken: varchar('refresh_token', { length: 500 }),
   expiresAt: timestamp('expires_at'),

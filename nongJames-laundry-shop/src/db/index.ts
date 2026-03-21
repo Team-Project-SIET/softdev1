@@ -1,7 +1,6 @@
 import { drizzle } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
 
-// import ทุก schema
 import * as authSchema from './schema/auth'
 import * as customersSchema from './schema/customers'
 import * as servicesSchema from './schema/services'
@@ -11,12 +10,8 @@ import * as paymentsSchema from './schema/payments'
 import * as financeSchema from './schema/finance'
 import * as notificationsSchema from './schema/notifications'
 
-// สร้าง postgres client
-const client = postgres(process.env.DATABASE_URL!, {
-  max: 10, // connection pool สูงสุด 10 connections
-})
+const client = postgres(process.env.DATABASE_URL!)
 
-// สร้าง drizzle instance พร้อม schema ทั้งหมด (ใช้ทำ query แบบ relational ได้)
 export const db = drizzle(client, {
   schema: {
     ...authSchema,
@@ -30,7 +25,6 @@ export const db = drizzle(client, {
   },
 })
 
-// re-export ทุก schema ออกไปใช้ที่อื่นได้เลย
 export * from './schema/auth'
 export * from './schema/customers'
 export * from './schema/services'

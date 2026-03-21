@@ -1,0 +1,20 @@
+{
+  "name": "nongJames-api",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "bun --watch src/index.ts",
+    "start": "bun src/index.ts"
+  },
+  "dependencies": {
+    "elysia": "latest",
+    "@elysiajs/cors": "latest",
+    "@elysiajs/jwt": "latest",
+    "@elysiajs/bearer": "latest",
+    "drizzle-orm": "latest",
+    "postgres": "latest",
+    "dotenv": "latest"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  }
+}

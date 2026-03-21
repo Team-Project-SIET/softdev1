@@ -1,6 +1,7 @@
 import {
-  pgTable, uuid, varchar, text, boolean,
-  decimal, integer, date, timestamp, pgEnum
+  pgTable, uuid, varchar, text,
+  boolean, numeric, integer,
+  date, timestamp, pgEnum
 } from 'drizzle-orm/pg-core'
 import { users } from './auth'
 
@@ -12,7 +13,7 @@ export const subscriptionStatusEnum = pgEnum('subscription_status', [
 export const customers = pgTable('customers', {
   id: uuid('id').defaultRandom().primaryKey(),
   userId: uuid('user_id')
-    .references(() => users.id, { onDelete: 'set null' }), // null = guest
+    .references(() => users.id, { onDelete: 'set null' }),
   name: varchar('name', { length: 255 }).notNull(),
   phone: varchar('phone', { length: 20 }),
   address: text('address'),
@@ -21,13 +22,25 @@ export const customers = pgTable('customers', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })
 
+export const b2bContracts = pgTable('b2b_contracts', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  customerId: uuid('customer_id').notNull()
+    .references(() => customers.id, { onDelete: 'cascade' }),
+  companyName: varchar('company_name', { length: 255 }).notNull(),
+  contractStart: date('contract_start').notNull(),
+  contractEnd: date('contract_end').notNull(),
+  specialPrice: numeric('special_price', { precision: 10, scale: 2 }),
+  paymentTerms: text('payment_terms'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+})
+
 export const subscriptionPlans = pgTable('subscription_plans', {
   id: uuid('id').defaultRandom().primaryKey(),
-  name: varchar('name', { length: 100 }).notNull(),      // "Monthly", "Yearly"
-  price: decimal('price', { precision: 10, scale: 2 }).notNull(),
-  durationDays: integer('duration_days').notNull(),       // 30, 365
+  name: varchar('name', { length: 100 }).notNull(),
+  price: numeric('price', { precision: 10, scale: 2 }).notNull(),
+  durationDays: integer('duration_days').notNull(),
   freeDelivery: boolean('free_delivery').notNull().default(false),
-  discountPercent: decimal('discount_percent', { precision: 5, scale: 2 })
+  discountPercent: numeric('discount_percent', { precision: 5, scale: 2 })
     .notNull().default('0'),
   isActive: boolean('is_active').notNull().default(true),
   createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -42,17 +55,5 @@ export const subscriptions = pgTable('subscriptions', {
   status: subscriptionStatusEnum('status').notNull().default('active'),
   startDate: date('start_date').notNull(),
   endDate: date('end_date').notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-})
-
-export const b2bContracts = pgTable('b2b_contracts', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  customerId: uuid('customer_id').notNull()
-    .references(() => customers.id, { onDelete: 'cascade' }),
-  companyName: varchar('company_name', { length: 255 }).notNull(),
-  contractStart: date('contract_start').notNull(),
-  contractEnd: date('contract_end').notNull(),
-  specialPrice: decimal('special_price', { precision: 10, scale: 2 }),
-  paymentTerms: text('payment_terms'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })

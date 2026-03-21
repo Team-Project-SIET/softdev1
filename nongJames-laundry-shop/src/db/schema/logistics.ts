@@ -2,19 +2,12 @@ import {
   pgTable, uuid, text,
   timestamp, pgEnum
 } from 'drizzle-orm/pg-core'
-import { orders } from './orders'
 import { users } from './auth'
+import { orders } from './orders'
 
-export const taskTypeEnum = pgEnum('task_type', [
-  'pickup',   // Driver ไปรับผ้าจากลูกค้า
-  'delivery', // Driver ไปส่งผ้าคืนลูกค้า
-])
-
+export const taskTypeEnum = pgEnum('task_type', ['pickup', 'delivery'])
 export const taskStatusEnum = pgEnum('task_status', [
-  'assigned',    // Admin มอบหมายแล้ว
-  'in_progress', // Driver กำลังทำอยู่
-  'completed',   // เสร็จแล้ว
-  'cancelled',   // ยกเลิก
+  'assigned', 'in_progress', 'completed', 'cancelled'
 ])
 
 export const driverTasks = pgTable('driver_tasks', {
@@ -26,6 +19,6 @@ export const driverTasks = pgTable('driver_tasks', {
   taskType: taskTypeEnum('task_type').notNull(),
   status: taskStatusEnum('status').notNull().default('assigned'),
   assignedAt: timestamp('assigned_at').defaultNow().notNull(),
-  completedAt: timestamp('completed_at'), // null = ยังไม่เสร็จ
+  completedAt: timestamp('completed_at'),
   notes: text('notes'),
 })

@@ -1,6 +1,6 @@
 import {
   pgTable, uuid, varchar, text,
-  decimal, date, timestamp, jsonb, pgEnum
+  numeric, date, timestamp, jsonb, pgEnum
 } from 'drizzle-orm/pg-core'
 import { users } from './auth'
 
@@ -13,11 +13,11 @@ export const bankTransactions = pgTable('bank_transactions', {
   id: uuid('id').defaultRandom().primaryKey(),
   scbTransactionId: varchar('scb_transaction_id', { length: 255 }).unique(),
   type: transactionTypeEnum('type').notNull(),
-  amount: decimal('amount', { precision: 15, scale: 2 }).notNull(),
+  amount: numeric('amount', { precision: 15, scale: 2 }).notNull(),
   description: text('description'),
   transactionDate: timestamp('transaction_date').notNull(),
-  balanceAfter: decimal('balance_after', { precision: 15, scale: 2 }),
-  rawData: jsonb('raw_data'), // เก็บ response เต็มจาก SCB API
+  balanceAfter: numeric('balance_after', { precision: 15, scale: 2 }),
+  rawData: jsonb('raw_data'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })
 
@@ -25,9 +25,10 @@ export const expenses = pgTable('expenses', {
   id: uuid('id').defaultRandom().primaryKey(),
   category: expenseCategoryEnum('category').notNull(),
   description: text('description'),
-  amount: decimal('amount', { precision: 10, scale: 2 }).notNull(),
+  amount: numeric('amount', { precision: 10, scale: 2 }).notNull(),
   expenseDate: date('expense_date').notNull(),
-  createdBy: uuid('created_by').notNull().references(() => users.id),
+  createdBy: uuid('created_by').notNull()
+    .references(() => users.id),
   receiptUrl: varchar('receipt_url', { length: 500 }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })

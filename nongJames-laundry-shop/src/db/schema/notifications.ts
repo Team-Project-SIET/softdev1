@@ -1,31 +1,27 @@
 import {
-  pgTable, uuid, text,
+  pgTable, uuid, varchar, text,
   timestamp, pgEnum
 } from 'drizzle-orm/pg-core'
+import { customers } from './customers'
 import { orders } from './orders'
-import { users } from './auth'
 
-export const taskTypeEnum = pgEnum('task_type', [
-  'pickup',   // Driver ไปรับผ้าจากลูกค้า
-  'delivery', // Driver ไปส่งผ้าคืนลูกค้า
+export const notificationTypeEnum = pgEnum('notification_type', [
+  'status_update', 'payment_reminder', 'promotion'
+])
+export const notificationStatusEnum = pgEnum('notification_status', [
+  'pending', 'sent', 'failed'
 ])
 
-export const taskStatusEnum = pgEnum('task_status', [
-  'assigned',    // Admin มอบหมายแล้ว
-  'in_progress', // Driver กำลังทำอยู่
-  'completed',   // เสร็จแล้ว
-  'cancelled',   // ยกเลิก
-])
-
-export const driverTasks = pgTable('driver_tasks', {
+export const notifications = pgTable('notifications', {
   id: uuid('id').defaultRandom().primaryKey(),
-  orderId: uuid('order_id').notNull()
-    .references(() => orders.id, { onDelete: 'cascade' }),
-  driverId: uuid('driver_id').notNull()
-    .references(() => users.id),
-  taskType: taskTypeEnum('task_type').notNull(),
-  status: taskStatusEnum('status').notNull().default('assigned'),
-  assignedAt: timestamp('assigned_at').defaultNow().notNull(),
-  completedAt: timestamp('completed_at'), // null = ยังไม่เสร็จ
-  notes: text('notes'),
+  customerId: uuid('customer_id').notNull()
+    .references(() => customers.id, { onDelete: 'cascade' }),
+  orderId: uuid('order_id')
+    .references(() => orders.id, { onDelete: 'set null' }),
+  type: notificationTypeEnum('type').notNull(),
+  message: text('message').notNull(),
+  lineMessageId: varchar('line_message_id', { length: 255 }),
+  status: notificationStatusEnum('status').notNull().default('pending'),
+  sentAt: timestamp('sent_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
 })
