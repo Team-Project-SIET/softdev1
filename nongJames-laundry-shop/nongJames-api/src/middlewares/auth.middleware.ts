@@ -1,7 +1,7 @@
 import Elysia from 'elysia'
 import { bearer } from '@elysiajs/bearer'
 import { jwt } from '@elysiajs/jwt'
-import { db, users } from './db'
+import { db, users } from '../db.ts'
 import { eq } from 'drizzle-orm'
 
 // ── ประเภทข้อมูลใน JWT Token ──────────────────────────────────────────
