@@ -94,13 +94,13 @@ bun drizzle-kit migrate
 
 ### คำสั่งที่ใช้บ่อย
 ### รัน API (dev mode)
-```bun run dev```
+>```bun run dev```
 
 ### รัน database migration
-```bun drizzle-kit migrate```
+>```bun drizzle-kit migrate```
 
 ### เปิด Drizzle Studio (GUI ดู database)
-```bun drizzle-kit studio```
+>```bun drizzle-kit studio```
 
 ### เปิด / ปิด Docker
 >```docker compose up -d```
