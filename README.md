@@ -35,7 +35,10 @@ cd ..
 ```
 
 ### ตั้งค่า Environment Variables
-cp .env.example .env
+
+```cp .env.example .env```
+
+จากนั้นแก้ไขรายละเอียดตามที่ example ได้เขียนไว้
 
 ### เปิด PostgreSQL + pgAdmin ด้วย Docker
 ```docker compose up -d```
