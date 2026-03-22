@@ -8,7 +8,6 @@
 
 | โปรแกรม | Version | ดาวน์โหลด |
 |---------|---------|-----------|
-| **Bun** | >= 1.0 | https://bun.sh |
 | **Docker Desktop** | latest | https://www.docker.com/products/docker-desktop |
 | **Git** | latest | https://git-scm.com |
 
@@ -23,16 +22,18 @@ git clone <repo-url>
 cd nongJames-laundry-shop
 ```
 
-### ติดตั้ง Next.js dependencies
-```
-bun install
-```
-### ติดตั้ง API dependencies
-```
-cd nongJames-api
-bun install
-cd ..
-```
+### ติดตั้ง dependencies ของ bun ด้วย docker-compose
+### Build และรันทุก service
+>docker compose up -d --build
+
+### ดู logs ทั้งหมด
+>docker compose logs -f
+### ดู logs เฉพาะ service
+>docker compose logs -f web
+docker compose logs -f api
+
+### รัน migrate (ยังต้องรันบน host เพราะใช้ localhost)
+>bun drizzle-kit migrate
 
 ### ตั้งค่า Environment Variables
 
@@ -41,7 +42,8 @@ cd ..
 จากนั้นแก้ไขรายละเอียดตามที่ example ได้เขียนไว้
 
 ### เปิด PostgreSQL + pgAdmin ด้วย Docker
-```docker compose up -d```
+ถ้ารันอยู่แล้วไม่ต้องใช้คำสั่งนี้
+```docker compose up -d``` 
 
 ### เช็คว่า container รันอยู่
 ```docker ps```
