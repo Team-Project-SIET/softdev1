@@ -50,4 +50,5 @@ dist/
 
 Thumbs.db   # ไฟล์ขยะของ Windows
 LSsoftdev.sql
-.env
+.env*
+!.env.example
