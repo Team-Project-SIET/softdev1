@@ -9,6 +9,7 @@ import * as logisticsSchema from './schema/logistics'
 import * as paymentsSchema from './schema/payments'
 import * as financeSchema from './schema/finance'
 import * as notificationsSchema from './schema/notifications'
+import * as location from './schema/location'
 
 const client = postgres(process.env.DATABASE_URL!)
 
@@ -22,6 +23,7 @@ export const db = drizzle(client, {
     ...paymentsSchema,
     ...financeSchema,
     ...notificationsSchema,
+    ...location,
   },
 })
 
@@ -33,3 +35,4 @@ export * from './schema/logistics'
 export * from './schema/payments'
 export * from './schema/finance'
 export * from './schema/notifications'
+export * from './schema/location'
