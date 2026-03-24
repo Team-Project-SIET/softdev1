@@ -1,6 +1,7 @@
 import Elysia, { t } from 'elysia'
 import { eq, desc } from 'drizzle-orm'
-import { db, notifications, customers, oauthAccounts } from '../db'
+import { db } from '../db'
+import { notifications, customers, oauthAccounts } from '../db/schema'
 import { authPlugin, requireRole } from '../middlewares/auth.middleware'
 
 // ── Helper: ส่ง LINE Push Message ─────────────────────────────────────
@@ -88,14 +89,16 @@ export const notificationRoutes = new Elysia({ prefix: '/notifications' })
       const [noti] = await db
         .insert(notifications)
         .values({
-          customerId,
-          orderId:       orderId ?? null,
-          type:          'status_update',
+          userId: customer.userId,
+          orderId: orderId ?? null,
+          type: 'ORDER_STATUS_UPDATED',
+          channel: 'LINE_OA',
+          title: `Order Status Update`,
           message,
           lineMessageId: lineRes?.sentMessages?.[0]?.id ?? null,
-          status:        'sent',
-          sentAt:        new Date(),
-        })
+          isSent: true,
+          sentAt: new Date(),
+        } as any)
         .returning()
 
       return { success: true, message: 'ส่ง notification สำเร็จ', data: noti }
@@ -103,19 +106,22 @@ export const notificationRoutes = new Elysia({ prefix: '/notifications' })
     } catch (err: any) {
       // ถ้าส่งไม่สำเร็จ บันทึก status เป็น failed
       await db.insert(notifications).values({
-        customerId,
-        orderId:  orderId ?? null,
-        type:     'status_update',
+        userId: customer.userId,
+        orderId: orderId ?? null,
+        type: 'ORDER_STATUS_UPDATED',
+        channel: 'LINE_OA',
+        title: `Order Status Update Failed`,
         message,
-        status:   'failed',
-      })
+        isSent: false,
+        failureReason: err.message,
+      } as any)
 
       console.error('[LINE Push Error]', err.message)
       set.status = 500
       return { success: false, message: 'ส่ง LINE notification ไม่สำเร็จ', data: null }
     }
   }, {
-    beforeHandle: [requireRole(['admin', 'staff'])],
+    beforeHandle: [requireRole(['ADMIN', 'STAFF'])],
     body: t.Object({
       customerId: t.String(),
       status:     t.String(),
@@ -129,11 +135,11 @@ export const notificationRoutes = new Elysia({ prefix: '/notifications' })
     const result = await db
       .select()
       .from(notifications)
-      .where(eq(notifications.customerId, params.customerId))
+      .where(eq(notifications.userId, params.customerId))
       .orderBy(desc(notifications.createdAt))
 
     return { success: true, message: 'ok', data: result }
   }, {
-    beforeHandle: [requireRole(['admin', 'staff'])],
+    beforeHandle: [requireRole(['ADMIN', 'STAFF'])],
     params: t.Object({ customerId: t.String() }),
   })

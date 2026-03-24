@@ -178,9 +178,9 @@ export type OrderList = Static<typeof OrderListSchema>;
  * @deprecated Use CreateOrderSchema and CreateOrder type instead
  */
 export class CreateOrderDTO implements CreateOrder {
-  customerId: string;
-  items: CreateOrderItem[];
-  deliveryType: 'PICKUP' | 'DELIVERY';
+  customerId!: string;
+  items!: CreateOrderItem[];
+  deliveryType!: 'PICKUP' | 'DELIVERY';
   deliveryAddress?: string;
   notes?: string;
 
@@ -208,18 +208,21 @@ export class UpdateOrderDTO implements Partial<UpdateOrder> {
   }
 }
 
+// Type helper for status
+import { Static } from 'elysia';
+
 /**
  * @deprecated Use OrderItemSchema and OrderItem type instead
  */
 export class OrderItemDTO implements OrderItem {
-  id: string;
-  orderId: string;
-  serviceId: string;
-  quantity: number;
-  unitPrice: number;
-  totalPrice: number;
+  id!: string;
+  orderId!: string;
+  serviceId!: string;
+  quantity!: number;
+  unitPrice!: number;
+  totalPrice!: number;
   description?: string;
-  createdAt: Date;
+  createdAt!: Date;
 
   constructor(data: OrderItem) {
     this.id = data.id;
@@ -237,26 +240,26 @@ export class OrderItemDTO implements OrderItem {
  * @deprecated Use OrderResponseSchema and OrderResponse type instead
  */
 export class OrderResponseDTO implements OrderResponse {
-  id: string;
-  orderNumber: string;
-  customerId: string;
-  status: OrderStatus;
-  deliveryType: 'PICKUP' | 'DELIVERY';
+  id!: string;
+  orderNumber!: string;
+  customerId!: string;
+  status!: OrderStatus;
+  deliveryType!: 'PICKUP' | 'DELIVERY';
   deliveryAddress?: string;
-  subtotal: number;
-  taxAmount: number;
-  deliveryFee: number;
-  totalAmount: number;
-  loyaltyPointsEarned: number;
-  items: OrderItem[];
+  subtotal!: number;
+  taxAmount!: number;
+  deliveryFee!: number;
+  totalAmount!: number;
+  loyaltyPointsEarned!: number;
+  items!: OrderItem[];
   notes?: string;
   driverId?: string;
-  receivedDate: Date;
+  receivedDate!: Date;
   estimatedReadyDate?: Date;
   actualDeliveryDate?: Date;
   completedDate?: Date;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt!: Date;
+  updatedAt!: Date;
 
   constructor(data: OrderResponse) {
     this.id = data.id;

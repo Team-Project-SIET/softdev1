@@ -1,6 +1,7 @@
 import Elysia, { t } from 'elysia'
 import { eq, and } from 'drizzle-orm'
-import { db, driverTasks, orders, users } from '../db'
+import { db } from '../db'
+import { driverTasks, orders, users } from '../db/schema'
 import { authPlugin, requireRole } from '../middlewares/auth.middleware'
 
 export const logisticsRoutes = new Elysia({ prefix: '/logistics' })
@@ -21,7 +22,7 @@ export const logisticsRoutes = new Elysia({ prefix: '/logistics' })
         orderNumber: orders.orderNumber,
         orderStatus: orders.status,
         // ดึงชื่อ driver
-        driverName:  users.name,
+        driverName:  users.fullName,
       })
       .from(driverTasks)
       .innerJoin(orders, eq(driverTasks.orderId, orders.id))
@@ -29,12 +30,13 @@ export const logisticsRoutes = new Elysia({ prefix: '/logistics' })
 
     return { success: true, message: 'ok', data: result }
   }, {
-    beforeHandle: [requireRole(['admin', 'staff'])],
+    beforeHandle: [requireRole(['ADMIN', 'STAFF'])],
   })
 
   // ── GET /logistics/tasks/my ──────────────────────────────────────────
   // Driver ดู tasks ที่ได้รับมอบหมาย
-  .get('/tasks/my', async ({ user, set }) => {
+  .get('/tasks/my', async ({ store, set }) => {
+    const user = (store as any).user
     if (!user) {
       set.status = 401
       return { success: false, message: 'ยังไม่ได้ Login', data: null }
@@ -55,14 +57,14 @@ export const logisticsRoutes = new Elysia({ prefix: '/logistics' })
       .from(driverTasks)
       .innerJoin(orders, eq(driverTasks.orderId, orders.id))
       .where(and(
-        eq(driverTasks.driverId, user.id),
+        eq(driverTasks.driverId, user.userId),
         // แสดงแค่ที่ยังไม่เสร็จ
         eq(driverTasks.status, 'assigned')
       ))
 
     return { success: true, message: 'ok', data: myTasks }
   }, {
-    beforeHandle: [requireRole(['driver'])],
+    beforeHandle: [requireRole(['DRIVER'])],
   })
 
   // ── POST /logistics/tasks ────────────────────────────────────────────
@@ -87,7 +89,7 @@ export const logisticsRoutes = new Elysia({ prefix: '/logistics' })
       .from(users)
       .where(and(
         eq(users.id, body.driverId),
-        eq(users.role, 'driver')
+        eq(users.role, 'DRIVER')
       ))
       .limit(1)
       .then(r => r[0])
@@ -111,7 +113,7 @@ export const logisticsRoutes = new Elysia({ prefix: '/logistics' })
     set.status = 201
     return { success: true, message: 'มอบหมายงานสำเร็จ', data: task }
   }, {
-    beforeHandle: [requireRole(['admin', 'staff'])],
+    beforeHandle: [requireRole(['ADMIN', 'STAFF'])],
     body: t.Object({
       orderId:  t.String(),
       driverId: t.String(),
@@ -146,7 +148,7 @@ export const logisticsRoutes = new Elysia({ prefix: '/logistics' })
 
     return { success: true, message: `อัปเดต task เป็น ${body.status}`, data: null }
   }, {
-    beforeHandle: [requireRole(['driver', 'admin'])],
+    beforeHandle: [requireRole(['DRIVER', 'ADMIN'])],
     params: t.Object({ id: t.String() }),
     body: t.Object({
       status: t.Union([

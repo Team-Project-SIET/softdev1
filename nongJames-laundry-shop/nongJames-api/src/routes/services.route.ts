@@ -25,7 +25,7 @@ export const serviceRoutes = new Elysia({ prefix: '/services' })
     const result = await db.select().from(services)
     return { success: true, message: 'ok', data: result }
   }, {
-    beforeHandle: [requireRole(['admin'])],
+    beforeHandle: [requireRole(['ADMIN'])],
   })
 
   // ── POST /services ───────────────────────────────────────────────────
@@ -33,13 +33,13 @@ export const serviceRoutes = new Elysia({ prefix: '/services' })
   .post('/', async ({ body, set }) => {
     const [newService] = await db
       .insert(services)
-      .values(body)
+      .values(body as any)
       .returning()
 
     set.status = 201
     return { success: true, message: 'เพิ่มบริการสำเร็จ', data: newService }
   }, {
-    beforeHandle: [requireRole(['admin'])],
+    beforeHandle: [requireRole(['ADMIN'])],
     body: t.Object({
       name:        t.String(),
       description: t.Optional(t.String()),
@@ -75,7 +75,7 @@ export const serviceRoutes = new Elysia({ prefix: '/services' })
 
     return { success: true, message: 'แก้ไขสำเร็จ', data: updated }
   }, {
-    beforeHandle: [requireRole(['admin'])],
+    beforeHandle: [requireRole(['ADMIN'])],
     params: t.Object({ id: t.String() }),
     body: t.Object({
       name:        t.Optional(t.String()),
@@ -108,6 +108,6 @@ export const serviceRoutes = new Elysia({ prefix: '/services' })
 
     return { success: true, message: 'ปิดบริการแล้ว', data: null }
   }, {
-    beforeHandle: [requireRole(['admin'])],
+    beforeHandle: [requireRole(['ADMIN'])],
     params: t.Object({ id: t.String() }),
   })

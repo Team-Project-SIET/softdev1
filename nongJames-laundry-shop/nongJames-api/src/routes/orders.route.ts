@@ -1,9 +1,10 @@
 import Elysia, { t } from 'elysia'
 import { eq, desc } from 'drizzle-orm'
+import { db } from '../db'
 import {
-  db, orders, orderItems,
+  orders, orderItems,
   orderStatusHistory, customers, users
-} from '../db'
+} from '../db/schema'
 import { authPlugin, requireAuth, requireRole } from '../middlewares/auth.middleware'
 
 const JWT_SECRET = process.env.JWT_SECRET!
@@ -24,20 +25,21 @@ export const orderRoutes = new Elysia({ prefix: '/orders' })
 
     return { success: true, message: 'ok', data: result }
   }, {
-    beforeHandle: [requireRole(['admin', 'staff'])],
+    beforeHandle: [requireRole(['ADMIN', 'STAFF'])],
   })
 
   // ── GET /orders/my ──────────────────────────────────────────────────
   // Customer ดู orders ของตัวเอง
-  // * ต้องวางก่อน /:id yokan Elysia จะ match "my" เป็น id แทน
-  .get('/my', async ({ user, set }) => {
+  // * ต้องวางก่อน /:id เพราะ Elysia จะ match "my" เป็น id แทน
+  .get('/my', async ({ store, set }) => {
+    const user = (store as any)?.user
     if (!user) return set.status = 401
 
     // หา customer profile ของ user นี้
     const customer = await db
       .select()
       .from(customers)
-      .where(eq(customers.userId, user.id))
+      .where(eq(customers.userId, user.userId))
       .limit(1)
       .then(r => r[0])
 
@@ -92,7 +94,10 @@ export const orderRoutes = new Elysia({ prefix: '/orders' })
   //
   // body = ข้อมูลที่ Frontend ส่งมาใน request body (JSON)
   // t.Object() = validate รูปแบบข้อมูล ถ้าผิดจะ error 422 อัตโนมัติ
-  .post('/', async ({ body, user, set }) => {
+  .post('/', async ({ body, store, set }) => {
+    const user = (store as any)?.user
+    if (!user) return set.status = 401
+
     const { customerId, orderType, pickupAddress, deliveryAddress, items } = body
 
     // ① คำนวณราคารวมจาก items ทั้งหมด
@@ -111,14 +116,14 @@ export const orderRoutes = new Elysia({ prefix: '/orders' })
     const [newOrder] = await db.insert(orders).values({
       orderNumber,
       customerId,
-      createdBy:       user!.id,
+      createdBy:       user.userId,
       orderType,
       pickupAddress:   pickupAddress ?? null,
       deliveryAddress: deliveryAddress ?? null,
       totalAmount:     totalAmount.toString(),
-      status:          'pending_pickup',
-      paymentStatus:   'pending',
-    }).returning()
+      status:          'PENDING_PICKUP',
+      paymentStatus:   'PENDING',
+    } as any).returning()
 
     // ④ สร้าง order items (loop สร้างทีละรายการ)
     if (items.length > 0) {
@@ -136,18 +141,18 @@ export const orderRoutes = new Elysia({ prefix: '/orders' })
     // ⑤ บันทึก log ว่าสร้าง order แล้ว
     await db.insert(orderStatusHistory).values({
       orderId:   newOrder.id,
-      changedBy: user!.id,
-      status:    'pending_pickup',
+      changedBy: user.userId,
+      status:    'PENDING_PICKUP',
       note:      'Order created by staff',
     })
 
     set.status = 201
     return { success: true, message: 'สร้าง Order สำเร็จ', data: newOrder }
   }, {
-    beforeHandle: [requireRole(['admin', 'staff'])],
+    beforeHandle: [requireRole(['ADMIN', 'STAFF'])],
     body: t.Object({
       customerId:      t.String(),
-      orderType:       t.Union([t.Literal('b2c'), t.Literal('b2b')]),
+      orderType:       t.Union([t.Literal('B2C'), t.Literal('B2B')]),
       pickupAddress:   t.Optional(t.String()),
       deliveryAddress: t.Optional(t.String()),
       items: t.Array(t.Object({
@@ -161,7 +166,10 @@ export const orderRoutes = new Elysia({ prefix: '/orders' })
   // ── PATCH /orders/:id/status ────────────────────────────────────────
   // เปลี่ยนสถานะ Order
   // Admin/Staff/Driver ทำได้ แต่ Driver ทำได้แค่บางสถานะ
-  .patch('/:id/status', async ({ params, body, user, set }) => {
+  .patch('/:id/status', async ({ params, body, store, set }) => {
+    const user = (store as any)?.user
+    if (!user) return set.status = 401
+
     const { status, note } = body
 
     // ① เช็คว่า order มีอยู่จริง
@@ -180,34 +188,34 @@ export const orderRoutes = new Elysia({ prefix: '/orders' })
     // ② อัปเดตสถานะ
     await db
       .update(orders)
-      .set({ status, updatedAt: new Date() })
+      .set({ status, updatedAt: new Date() } as any)
       .where(eq(orders.id, params.id))
 
     // ③ บันทึก log ทุกครั้งที่สถานะเปลี่ยน
     // ประโยชน์: ดูได้ว่าใครเปลี่ยน เมื่อไหร่ จาก/ไปสถานะไหน
     await db.insert(orderStatusHistory).values({
       orderId:   params.id,
-      changedBy: user!.id,
+      changedBy: user.userId,
       status,
       note:      note ?? null,
-    })
+    } as any)
 
     // TODO: ส่ง LINE push notification ให้ลูกค้าในขั้นตอนถัดไป
     // await lineService.pushStatusUpdate(order.customerId, status)
 
     return { success: true, message: `อัปเดตสถานะเป็น ${status} แล้ว`, data: null }
   }, {
-    beforeHandle: [requireRole(['admin', 'staff', 'driver'])],
+    beforeHandle: [requireRole(['ADMIN', 'STAFF', 'DRIVER'])],
     params: t.Object({ id: t.String() }),
     body: t.Object({
       // Union = รับได้แค่ค่าที่กำหนด ป้องกัน typo
       status: t.Union([
-        t.Literal('pending_pickup'),
-        t.Literal('washing'),
-        t.Literal('packing'),
-        t.Literal('ready_for_delivery'),
-        t.Literal('completed'),
-        t.Literal('cancelled'),
+        t.Literal('PENDING_PICKUP'),
+        t.Literal('WASHING'),
+        t.Literal('PACKING'),
+        t.Literal('READY_FOR_DELIVERY'),
+        t.Literal('COMPLETED'),
+        t.Literal('CANCELLED'),
       ]),
       note: t.Optional(t.String()),
     }),

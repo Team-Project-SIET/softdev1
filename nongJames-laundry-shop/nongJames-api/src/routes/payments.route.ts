@@ -65,9 +65,9 @@ export const paymentRoutes = new Elysia({ prefix: '/payments' })
       .values({
         orderId:  body.orderId,
         amount:   order.totalAmount,
-        method:   'promptpay_qr',
-        status:   'pending',
-      })
+        method:   'SCB_QR',
+        status:   'PENDING',
+      } as any)
       .returning()
 
     set.status = 201
@@ -108,21 +108,21 @@ export const paymentRoutes = new Elysia({ prefix: '/payments' })
     await db
       .update(payments)
       .set({
-        status:       'success',
+        status:       'COMPLETED',
         slipImageUrl: body.slipImageUrl ?? null,
         paidAt:       new Date(),
-      })
+      } as any)
       .where(eq(payments.id, params.id))
 
     // อัปเดต order ว่าชำระแล้ว
     await db
       .update(orders)
-      .set({ paymentStatus: 'paid' })
+      .set({ paymentStatus: 'paid' } as any)
       .where(eq(orders.id, payment.orderId))
 
     return { success: true, message: 'Confirm การชำระเงินสำเร็จ', data: null }
   }, {
-    beforeHandle: [requireRole(['admin', 'staff'])],
+    beforeHandle: [requireRole(['ADMIN', 'STAFF'])],
     params: t.Object({ id: t.String() }),
     body: t.Object({
       slipImageUrl: t.Optional(t.String()),

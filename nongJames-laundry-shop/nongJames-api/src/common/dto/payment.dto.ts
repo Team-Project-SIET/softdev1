@@ -99,9 +99,9 @@ export type RefundPayment = Static<typeof RefundPaymentSchema>;
  * @deprecated Use CreatePaymentSchema and CreatePayment type instead
  */
 export class CreatePaymentDTO implements CreatePayment {
-  orderId: string;
-  amount: number;
-  paymentMethod: 'SCB' | 'CASH' | 'TRANSFER' | 'CREDIT_CARD' | 'QR_CODE';
+  orderId!: string;
+  amount!: number;
+  paymentMethod!: 'SCB' | 'CASH' | 'TRANSFER' | 'CREDIT_CARD' | 'QR_CODE';
   description?: string;
 
   constructor(data: CreatePayment) {
@@ -116,14 +116,14 @@ export class CreatePaymentDTO implements CreatePayment {
  * @deprecated Use PaymentResponseSchema and PaymentResponse type instead
  */
 export class PaymentResponseDTO implements PaymentResponse {
-  id: string;
-  orderId: string;
-  amount: number;
-  status: PaymentStatus;
-  paymentMethod: string;
+  id!: string;
+  orderId!: string;
+  amount!: number;
+  status!: PaymentStatus;
+  paymentMethod!: string;
   transactionRef?: string;
   paidAt?: Date;
-  createdAt: Date;
+  createdAt!: Date;
   updatedAt?: Date;
 
   constructor(data: PaymentResponse) {

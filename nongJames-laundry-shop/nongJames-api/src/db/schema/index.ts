@@ -5,21 +5,41 @@
 
 // Users & Authentication
 export * from './users';
+export * from './oauth-accounts';
 
 // Orders & Workflow
-export * from './orders';
+export {
+  orders,
+  orderItems,
+  orderWorkflow,
+  orderStatusHistory,
+  orderStatusEnum,
+  orderTypeEnum,
+  deliveryTypeEnum,
+  paymentStatusEnum as ordersPaymentStatusEnum
+} from './orders';
 export * from './order-items';
 export * from './order-workflow';
 
+// Customers
+export * from './customers';
+
 // Logistics & Delivery
 export * from './logistics';
+export * from './driver-tasks';
 
-// Payments & Invoicing
-export * from './payments';
+// Payments & Invoicing — exclude duplicate enums
+export { payments } from './payments';
+export {
+  paymentStatusEnum as paymentsPaymentStatusEnum,
+  paymentMethodEnum as paymentsPaymentMethodEnum
+} from './payments';
 
-// Financial Management
-export * from './transactions';
+// Financial Management — exclude duplicate enums
+export { transactions } from './transactions';
 export * from './finance';
+export * from './expenses';
+export * from './driver-tasks';
 
 // B2B Contracts
 export * from './contracts';

@@ -13,6 +13,7 @@
     "dotenv": "latest",
     "drizzle-orm": "latest",
     "elysia": "latest",
+    "elysia-logger": "latest",
     "postgres": "latest"
   },
   "devDependencies": {

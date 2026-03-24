@@ -1,9 +1,8 @@
 import Elysia, { t } from 'elysia'
 import { jwt } from '@elysiajs/jwt'
 import { eq } from 'drizzle-orm'
-import {
-  db, users, customers, oauthAccounts
-} from '../db'
+import { db } from '../db'
+import { users, customers, oauthAccounts } from '../db/schema'
 import { authPlugin } from '../middlewares/auth.middleware'
 
 // ── LINE OAuth Config ─────────────────────────────────────────────────
@@ -42,7 +41,9 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
 
   // ── GET /auth/me ────────────────────────────────────────────────────
   // ดูข้อมูลตัวเอง (ต้องแนบ token มาด้วย)
-  .get('/me', ({ user, set }) => {
+  .get('/me', (ctx) => {
+    const user = (ctx.store as any)?.user
+    const { set } = ctx
     if (!user) {
       set.status = 401
       return { success: false, message: 'ยังไม่ได้ Login', data: null }
@@ -115,16 +116,16 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
       if (!user) {
         // ไม่มีใน DB → สร้างใหม่
         ;[user] = await db.insert(users).values({
-          name:  profile.displayName,
+          fullName:  profile.displayName,
           email: `${profile.userId}@line.njlaundry`,
-          role:  'customer',
+          role:  'CUSTOMER',
         }).returning()
 
         // สร้าง customer profile ควบคู่กัน
         await db.insert(customers).values({
           userId: user.id,
           name:   profile.displayName,
-          type:   'b2c',
+          customerType:   'INDIVIDUAL',
         })
       }
 
@@ -232,11 +233,11 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
 
       if (!user) {
         // Admin ใหม่ต้องให้ Super Admin ไป assign role ภายหลัง
-        // default role เป็น customer ก่อน
+        // default role เป็น CUSTOMER ก่อน
         ;[user] = await db.insert(users).values({
-          name:  profile.name,
+          fullName:  profile.name,
           email: profile.email,
-          role:  'customer',
+          role:  'CUSTOMER',
         }).returning()
       }
 

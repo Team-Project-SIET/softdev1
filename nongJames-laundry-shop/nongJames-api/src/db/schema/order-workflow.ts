@@ -45,6 +45,11 @@ export const orderWorkflowHistory = pgTable(
 export type OrderWorkflowHistory = typeof orderWorkflowHistory.$inferSelect;
 export type NewOrderWorkflowHistory = typeof orderWorkflowHistory.$inferInsert;
 
+// Alias for backward compatibility
+export { orderWorkflowHistory as orderStatusHistory };
+export type OrderStatusHistory = typeof orderWorkflowHistory.$inferSelect;
+export type NewOrderStatusHistory = typeof orderWorkflowHistory.$inferInsert;
+
 /**
  * Order Updates Timeline Table
  * More detailed tracking of order events (scanning, delivery attempts, etc.)

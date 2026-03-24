@@ -9,8 +9,14 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
-    }
+    },
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true
   },
-  "include": ["src/**/*",
-  "../src/db/schema/**/*"] 
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
 }

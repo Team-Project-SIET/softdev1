@@ -1,9 +1,7 @@
 import Elysia, { t } from 'elysia'
 import { eq, desc } from 'drizzle-orm'
-import {
-  db, customers, orders,
-  subscriptions, subscriptionPlans, b2bContracts
-} from '../db'
+import { db } from '../db'
+import { customers, orders, contracts } from '../db/schema'
 import { authPlugin, requireRole, requireAuth } from '../middlewares/auth.middleware'
 
 export const customerRoutes = new Elysia({ prefix: '/customers' })
@@ -19,7 +17,7 @@ export const customerRoutes = new Elysia({ prefix: '/customers' })
 
     return { success: true, message: 'ok', data: result }
   }, {
-    beforeHandle: [requireRole(['admin', 'staff'])],
+    beforeHandle: [requireRole(['ADMIN', 'STAFF'])],
   })
 
   // ── GET /customers/:id ───────────────────────────────────────────────
@@ -39,7 +37,7 @@ export const customerRoutes = new Elysia({ prefix: '/customers' })
 
     return { success: true, message: 'ok', data: customer }
   }, {
-    beforeHandle: [requireRole(['admin', 'staff'])],
+    beforeHandle: [requireRole(['ADMIN', 'STAFF'])],
     params: t.Object({ id: t.String() }),
   })
 
@@ -54,34 +52,29 @@ export const customerRoutes = new Elysia({ prefix: '/customers' })
 
     return { success: true, message: 'ok', data: customerOrders }
   }, {
-    beforeHandle: [requireRole(['admin', 'staff'])],
+    beforeHandle: [requireRole(['ADMIN', 'STAFF'])],
     params: t.Object({ id: t.String() }),
   })
 
-  // ── GET /customers/:id/subscription ─────────────────────────────────
-  // เช็ค subscription ปัจจุบันของลูกค้า
+  // ── GET /customers/:id/contracts ─────────────────────────────────
+  // เช็คสัญญา B2B ปัจจุบันของลูกค้า
   // ใช้ตอนสร้าง order เพื่อเช็คว่าส่งฟรีหรือมีส่วนลดไหม
-  .get('/:id/subscription', async ({ params }) => {
-    const sub = await db
+  .get('/:id/contracts', async ({ params }) => {
+    const customerContracts = await db
       .select({
-        // เลือก columns ที่ต้องการ แทนดึงทั้งหมด
-        id:              subscriptions.id,
-        status:          subscriptions.status,
-        startDate:       subscriptions.startDate,
-        endDate:         subscriptions.endDate,
-        // ดึงชื่อ plan และสิทธิ์จาก subscriptionPlans ด้วย
-        planName:        subscriptionPlans.name,
-        freeDelivery:    subscriptionPlans.freeDelivery,
-        discountPercent: subscriptionPlans.discountPercent,
+        id:              contracts.id,
+        status:          contracts.status,
+        startDate:       contracts.startDate,
+        endDate:         contracts.endDate,
+        contractNumber:  contracts.contractNumber,
+        discountPercentage: contracts.discountPercentage,
       })
-      .from(subscriptions)
-      // join = เชื่อม 2 table เข้าด้วยกัน
-      .innerJoin(subscriptionPlans, eq(subscriptions.planId, subscriptionPlans.id))
-      .where(eq(subscriptions.customerId, params.id))
+      .from(contracts)
+      .where(eq(contracts.clientId, params.id))
       .limit(1)
       .then(r => r[0] ?? null)
 
-    return { success: true, message: 'ok', data: sub }
+    return { success: true, message: 'ok', data: customerContracts }
   }, {
     beforeHandle: [requireAuth],
     params: t.Object({ id: t.String() }),
@@ -110,7 +103,7 @@ export const customerRoutes = new Elysia({ prefix: '/customers' })
 
     return { success: true, message: 'แก้ไขข้อมูลสำเร็จ', data: updated }
   }, {
-    beforeHandle: [requireRole(['admin', 'staff'])],
+    beforeHandle: [requireRole(['ADMIN', 'STAFF'])],
     params: t.Object({ id: t.String() }),
     body: t.Object({
       name:    t.Optional(t.String()),

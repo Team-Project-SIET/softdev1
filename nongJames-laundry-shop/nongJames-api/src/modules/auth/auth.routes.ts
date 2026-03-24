@@ -1,13 +1,54 @@
-import { Elysia } from 'elysia';
+import { Elysia, t } from 'elysia';
 import { AuthController } from './controllers';
+import { authPlugin, requireAuth } from '../../middlewares/auth.middleware';
+
+const JWT_SECRET = process.env.JWT_SECRET!;
 
 export function createAuthRoutes() {
   const authController = new AuthController();
 
-  return (new Elysia({ prefix: '/auth' }) as unknown as Elysia)
-    .post('/login', (ctx) => authController.login(ctx.body))
-    .post('/register', (ctx) => authController.register(ctx.body))
-    .post('/refresh', (ctx) => authController.refreshToken(ctx.body, ctx))
-    .post('/logout', (ctx) => authController.logout(ctx))
-    .get('/profile', (ctx) => authController.getProfile(ctx));
+  return new Elysia({ prefix: '/auth' })
+    // Login - no auth required
+    .post('/login', (ctx) => authController.login(ctx.body), {
+      body: t.Object({
+        email: t.String({ format: 'email' }),
+        password: t.String({ minLength: 1 }),
+      }),
+    })
+
+    // Register - no auth required
+    .post('/register', (ctx) => authController.register(ctx.body), {
+      body: t.Object({
+        name: t.String({ minLength: 1 }),
+        email: t.String({ format: 'email' }),
+        password: t.String({ minLength: 6 }),
+        role: t.Optional(t.Union([
+          t.Literal('admin'),
+          t.Literal('staff'),
+          t.Literal('driver'),
+          t.Literal('executive'),
+          t.Literal('customer'),
+        ])),
+      }),
+    })
+
+    // Refresh token - no auth required
+    .post('/refresh', (ctx) => authController.refreshToken(ctx.body, ctx), {
+      body: t.Object({
+        refreshToken: t.String(),
+      }),
+    })
+
+    // Protected routes below
+    .use(authPlugin(JWT_SECRET))
+
+    // Logout - requires auth
+    .post('/logout', (ctx) => authController.logout(ctx), {
+      beforeHandle: [requireAuth],
+    })
+
+    // Get profile - requires auth
+    .get('/profile', (ctx) => authController.getProfile(ctx), {
+      beforeHandle: [requireAuth],
+    });
 }

@@ -173,10 +173,10 @@ export type DeliveryList = Static<typeof DeliveryListSchema>;
  * @deprecated Use CreateDriverSchema and CreateDriver type instead
  */
 export class CreateDriverDTO implements CreateDriver {
-  name: string;
-  phone: string;
-  email: string;
-  licenseNumber: string;
+  name!: string;
+  phone!: string;
+  email!: string;
+  licenseNumber!: string;
   vehicleType?: string;
 
   constructor(data: CreateDriver) {
@@ -192,19 +192,19 @@ export class CreateDriverDTO implements CreateDriver {
  * @deprecated Use DriverResponseSchema and DriverResponse type instead
  */
 export class DriverResponseDTO implements DriverResponse {
-  id: string;
-  userId: string;
-  name: string;
-  phone: string;
-  email: string;
-  licenseNumber: string;
+  id!: string;
+  userId!: string;
+  name!: string;
+  phone!: string;
+  email!: string;
+  licenseNumber!: string;
   vehicleType?: string;
-  isActive: boolean;
-  isAvailable: boolean;
+  isActive!: boolean;
+  isAvailable!: boolean;
   averageRating?: number;
-  totalDeliveries: number;
+  totalDeliveries!: number;
   successRate?: number;
-  createdAt: Date;
+  createdAt!: Date;
   updatedAt?: Date;
 
   constructor(data: DriverResponse) {
@@ -229,9 +229,9 @@ export class DriverResponseDTO implements DriverResponse {
  * @deprecated Use AssignOrderSchema and AssignOrder type instead
  */
 export class AssignOrderDTO implements AssignOrder {
-  orderId: string;
-  driverId: string;
-  assignmentType: 'PICKUP' | 'DELIVERY' | 'BOTH';
+  orderId!: string;
+  driverId!: string;
+  assignmentType!: 'PICKUP' | 'DELIVERY' | 'BOTH';
   priority?: number;
   notes?: string;
 
