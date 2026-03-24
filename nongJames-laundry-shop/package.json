@@ -6,10 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
-    "db:generate": "drizzle-kit generate",
-    "db:push": "drizzle-kit push",
-    "db:migrate": "bun src/db/migrate.ts"
+    "lint": "eslint"
   },
   "dependencies": {
     "@elysiajs/cors": "^1.4.1",
