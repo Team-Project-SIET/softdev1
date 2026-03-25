@@ -1,4 +1,4 @@
-import { db, payments, orders, transactions, expenses, users, customers, invoices, financialReports } from '../../../db';
+import { db, payments, orders, transactions, expenses, users, customers, orderItems } from '../../../db';
 import { eq, and, gte, lte, desc, sum } from 'drizzle-orm';
 
 /**
@@ -253,9 +253,16 @@ export class FinanceController {
 
       // Get order items
       const items = await db
-        .select()
-        .from(payments)
-        .where(eq(payments.orderId, orderId));
+        .select({
+          id: orderItems.id,
+          serviceId: orderItems.serviceId,
+          quantity: orderItems.quantity,
+          unitPrice: orderItems.unitPrice,
+          totalPrice: orderItems.totalPrice,
+          description: orderItems.description,
+        })
+        .from(orderItems)
+        .where(eq(orderItems.orderId, orderId));
 
       const subtotal = parseFloat(order.totalAmount?.toString() || '0');
       const deliveryFee = parseFloat(order.deliveryFee?.toString() || '0');

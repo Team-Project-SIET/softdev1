@@ -9,6 +9,9 @@ import { createAuthRoutes } from './modules/auth';
 import { createOrderRoutes } from './modules/orders';
 import { createLogisticsRoutes } from './modules/logistics';
 import { createFinanceRoutes } from './modules/finance';
+import { createServicesRoutes } from './modules/services';
+import { createCustomersRoutes } from './modules/customers';
+import { createNotificationsRoutes } from './modules/notifications';
 
 // Middleware imports
 import { authPlugin, requireAuth, requireRole } from './middlewares/auth.middleware';
@@ -114,6 +117,9 @@ export function createApp(): Elysia {
     .use(createOrderRoutes())
     .use(createLogisticsRoutes())
     .use(createFinanceRoutes())
+    .use(createServicesRoutes())
+    .use(createCustomersRoutes())
+    .use(createNotificationsRoutes())
 
     // ────────────────────────────────────────────────────────
     // WEBHOOK ENDPOINTS (SCB & LINE - No Auth Required)

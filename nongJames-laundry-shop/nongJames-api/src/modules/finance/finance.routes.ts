@@ -98,7 +98,7 @@ export function createFinanceRoutes() {
 
     // Get expenses
     .get('/expenses', (ctx) => financeController.getExpenses(ctx), {
-      beforeHandle: [requireRole(['admin', 'executive'])],
+      beforeHandle: [requireRole(['ADMIN', 'EXECUTIVE'])],
     })
 
     // ═══════════════════════════════════════════════════════════════════
@@ -107,7 +107,7 @@ export function createFinanceRoutes() {
 
     // Generate invoice
     .post('/invoices', (ctx) => financeController.generateInvoice(ctx.body), {
-      beforeHandle: [requireRole(['admin', 'staff'])],
+      beforeHandle: [requireRole(['ADMIN', 'STAFF'])],
       body: t.Object({
         orderId: t.String(),
       }),
@@ -119,7 +119,7 @@ export function createFinanceRoutes() {
 
     // Executive Dashboard - Profit/Loss report
     .get('/reports/p-and-l', (ctx) => financeController.getProfitLossReport(ctx.query), {
-      beforeHandle: [requireRole(['admin', 'executive'])],
+      beforeHandle: [requireRole(['ADMIN', 'EXECUTIVE'])],
       query: t.Object({
         startDate: t.Optional(t.String()),
         endDate: t.Optional(t.String()),
@@ -128,7 +128,7 @@ export function createFinanceRoutes() {
 
     // Dashboard summary (convenience endpoint)
     .get('/dashboard', (ctx) => financeController.getProfitLossReport(ctx.query), {
-      beforeHandle: [requireRole(['admin', 'executive'])],
+      beforeHandle: [requireRole(['ADMIN', 'EXECUTIVE'])],
       query: t.Object({
         startDate: t.Optional(t.String()),
         endDate: t.Optional(t.String()),
