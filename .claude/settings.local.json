@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(docker exec:*)",
+      "Bash(cat src/db/migrations/*.sql)",
+      "Bash(bunx drizzle-kit:*)",
+      "Bash(timeout 5 bun run dev 2>&1)",
+      "Bash(curl -s http://localhost:3000/health)",
+      "Bash(curl:*)",
+      "Bash(export TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJlODc5Y2RlMi0yNDRiLTRiNjMtOGNiZi1hZTI1YWIzZmJiZmMiLCJlbWFpbCI6InRlc3RAZXhhbXBsZS5jb20iLCJyb2xlIjoiQURNSU4iLCJleHAiOjE3NzUwNTY2MDYsImlhdCI6MTc3NDQ1MTg1MH0.OXYM7herbFuJab9S_ysEow69yNdpWTGDgsyYERZNx2I\")",
+      "Bash(__NEW_LINE_e7a03571840873af__ curl:*)",
+      "Bash(__NEW_LINE_556bb9ca808fc1bb__ curl:*)"
+    ]
+  }
+}

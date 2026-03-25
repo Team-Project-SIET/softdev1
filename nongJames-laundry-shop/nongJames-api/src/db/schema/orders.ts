@@ -46,9 +46,9 @@ export const orderTypeEnum = pgEnum('order_type', ['b2c', 'b2b']);
 export const deliveryTypeEnum = pgEnum('delivery_type', ['WALK_IN', 'PICKUP', 'DELIVERY']);
 
 /**
- * Payment Status Enum
+ * Payment Status Enum for Orders
  */
-export const paymentStatusEnum = pgEnum('payment_status', [
+export const paymentStatusEnum = pgEnum('order_payment_status', [
   'pending',
   'paid',
   'partial',

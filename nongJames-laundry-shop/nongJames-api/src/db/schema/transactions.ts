@@ -12,6 +12,7 @@ import {
 } from 'drizzle-orm/pg-core';
 import { orders } from './orders';
 import { users } from './users';
+import { paymentMethodEnum } from './payments';
 
 /**
  * Transaction Type Enum
@@ -29,17 +30,6 @@ export const transactionStatusEnum = pgEnum('transaction_status', [
   'COMPLETED',
   'FAILED',
   'REFUNDED',
-]);
-
-/**
- * Payment Method
- */
-export const paymentMethodEnum = pgEnum('payment_method', [
-  'SCB_QR',
-  'SCB_TRANSFER',
-  'CREDIT_CARD',
-  'CASH',
-  'BANK_TRANSFER',
 ]);
 
 /**

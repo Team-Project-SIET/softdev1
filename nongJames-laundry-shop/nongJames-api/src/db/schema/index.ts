@@ -33,7 +33,11 @@ export {
 } from './payments';
 
 // Financial Management — exclude duplicate enums
-export { transactions } from './transactions';
+export {
+  transactions,
+  transactionTypeEnum,
+  transactionStatusEnum
+} from './transactions';
 export * from './finance';
 export * from './expenses';
 export * from './driver-tasks';

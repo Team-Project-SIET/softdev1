@@ -1,4 +1,4 @@
-import { db } from '../db';
+import { db } from '../../db';
 import postgres from 'postgres';
 
 /**
@@ -53,6 +53,7 @@ export async function withDrizzleTransaction<T>(
   return await db.transaction(async (tx) => {
     try {
       return await callback(tx);
+      
     } catch (error) {
       console.error('[DrizzleTransaction] Error in transaction:', error);
       throw error;
