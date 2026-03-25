@@ -343,7 +343,6 @@ export class CustomersController {
 
       // Import orders here to avoid circular dependency
       const { orders } = await import('../../../db/schema/orders');
-      const { eq, desc } = await import('drizzle-orm');
 
       const offset = (page - 1) * limit;
       const orderList = await db
