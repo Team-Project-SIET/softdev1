@@ -78,4 +78,6 @@ export const paymentRoutes = new Elysia({ prefix: '/payments' })
     beforeHandle: [requireRole(['admin', 'staff'])],
     params: t.Object({ id: t.String({ description: 'Payment UUID' }) }),
     body: t.Object({
-      slipImageUrl: t.Optional(t.String({ description: 'URL รูป slip (optional)' }
+      slipImageUrl: t.Optional(t.String({ description: 'URL รูป slip (optional)' })),
+    }),
+  })
