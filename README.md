@@ -1,7 +1,7 @@
-# NongJames Laundry Shop
+# nongJames Laundry Shop
 
 ## 1. บทนำ
-NongJames Laundry Shop เป็นระบบจัดการบริการซัก-อบ-รีด สำหรับลูกค้าและร้านค้า มีโมดูลจัดการคำสั่งซื้อ การชำระเงิน การแจ้งเตือน และการจัดส่ง
+nongJames Laundry Shop เป็นระบบจัดการบริการซัก-อบ-รีด สำหรับลูกค้าและร้านค้า มีโมดูลจัดการคำสั่งซื้อ การชำระเงิน การแจ้งเตือน และการจัดส่ง
 
 ## 2. รายละเอียดโครงงาน
 ### 2.1 ทีมงาน และบทบาท
@@ -34,14 +34,14 @@ NongJames Laundry Shop เป็นระบบจัดการบริกา
    - เอกสาร route ใน `nongJames-api/src/routes/*.route.ts`
 
 ### 2.4 Tech Stack
-- Frontend: Next.js, TypeScript, CSS Modules
-- Backend: Node.js, TypeScript, Express, Drizzle ORM
+- Frontend: Next.js
+- Backend: Bun, Elysia, Drizzle ORM
 - Database: PostgreSQL
 - Auth: JWT
 - Tools:
-  - Docker Compose
+  - Docker
   - ESLint และ Prettier
-  - GitHub Copilot (ช่วยโค้ด)
+  - GitHub Copilot
 
 ### 2.5 Test Case และ API Testing
 - Test case example:
