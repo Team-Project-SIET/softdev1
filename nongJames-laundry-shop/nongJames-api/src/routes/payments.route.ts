@@ -3,128 +3,79 @@ import { eq } from 'drizzle-orm'
 import { db, payments, orders } from '../db'
 import { authPlugin, requireRole, requireAuth } from '../middlewares/auth.middleware'
 
-// ── Helper: สร้าง PromptPay payload ──────────────────────────────────
-// PromptPay QR ใช้มาตรฐาน EMVCo QR Code
-// เราสร้าง payload string แล้วเอาไปแปลงเป็น QR image ที่ Frontend
-const generatePromptPayPayload = (phoneOrId: string, amount: number): string => {
-  // PromptPay payload format (simplified)
-  // จริงๆ ต้องคำนวณ CRC16 checksum ด้วย
-  // แนะนำใช้ library: promptpay-qr
-  const amountStr = amount.toFixed(2)
-  return `PromptPay:${phoneOrId}:${amountStr}`
-}
+const generatePromptPayPayload = (phone: string, amount: number) =>
+  `PromptPay:${phone}:${amount.toFixed(2)}`
 
 export const paymentRoutes = new Elysia({ prefix: '/payments' })
   .use(authPlugin(process.env.JWT_SECRET!))
 
-  // ── GET /payments/order/:orderId ─────────────────────────────────────
-  // ดูประวัติการชำระเงินของ order นั้น
-  .get('/order/:orderId', async ({ params, set }) => {
-    const orderPayments = await db
-      .select()
-      .from(payments)
+  .get('/order/:orderId', async ({ params }) => {
+    const result = await db.select().from(payments)
       .where(eq(payments.orderId, params.orderId))
-
-    return { success: true, message: 'ok', data: orderPayments }
+    return { success: true, message: 'ok', data: result }
   }, {
+    tags:    ['Payments'],
+    summary: 'ดูประวัติการชำระเงินของ Order',
+    detail:  {
+      description: '**Role:** ทุกคนที่ login',
+      security: [{ BearerAuth: [] }],
+    },
     beforeHandle: [requireAuth],
-    params: t.Object({ orderId: t.String() }),
+    params: t.Object({ orderId: t.String({ description: 'Order UUID' }) }),
   })
 
-  // ── POST /payments/qr ─────────────────────────────────────────────────
-  // สร้าง PromptPay QR สำหรับชำระเงิน
-  //
-  // Flow:
-  // 1. Frontend ขอ QR จาก API
-  // 2. API สร้าง payment record (status: pending)
-  // 3. API return payload ให้ Frontend แปลงเป็น QR image
-  // 4. ลูกค้าสแกน QR จ่ายเงิน
-  // 5. Admin กด confirm (PATCH /payments/:id/confirm)
   .post('/qr', async ({ body, set }) => {
-    // ตรวจว่า order มีอยู่
-    const order = await db
-      .select()
-      .from(orders)
-      .where(eq(orders.id, body.orderId))
-      .limit(1)
-      .then(r => r[0])
-
+    const order = await db.select().from(orders)
+      .where(eq(orders.id, body.orderId)).limit(1).then(r => r[0])
     if (!order) {
       set.status = 404
       return { success: false, message: 'ไม่พบ Order', data: null }
     }
-
-    // สร้าง PromptPay payload
-    const promptPayPhone = process.env.PROMPTPAY_PHONE! // เบอร์ร้าน NJ
-    const amount = Number(order.totalAmount)
-    const payload = generatePromptPayPayload(promptPayPhone, amount)
-
-    // บันทึก payment record (status ยังเป็น pending)
-    const [payment] = await db
-      .insert(payments)
-      .values({
-        orderId:  body.orderId,
-        amount:   order.totalAmount,
-        method:   'promptpay_qr',
-        status:   'pending',
-      })
-      .returning()
-
+    const amount  = Number(order.totalAmount)
+    const payload = generatePromptPayPayload(process.env.PROMPTPAY_PHONE!, amount)
+    const [payment] = await db.insert(payments).values({
+      orderId: body.orderId, amount: order.totalAmount,
+      method: 'promptpay_qr', status: 'pending',
+    }).returning()
     set.status = 201
     return {
-      success: true,
-      message: 'สร้าง QR สำเร็จ',
-      data: {
-        paymentId: payment.id,
-        amount,
-        // payload นี้เอาไปแปลงเป็น QR image ที่ Frontend
-        // ใช้ library: qrcode หรือ react-qr-code
-        promptPayPayload: payload,
-      }
+      success: true, message: 'สร้าง QR สำเร็จ',
+      data: { paymentId: payment.id, amount, promptPayPayload: payload },
     }
   }, {
+    tags:    ['Payments'],
+    summary: 'สร้าง PromptPay QR Code',
+    detail:  {
+      description: `**Role:** ทุกคนที่ login
+
+เอา \`promptPayPayload\` ที่ได้ไปแปลงเป็น QR image ที่ Frontend
+แนะนำใช้ library: \`react-qr-code\` หรือ \`qrcode\``,
+      security: [{ BearerAuth: [] }],
+    },
     beforeHandle: [requireAuth],
     body: t.Object({
-      orderId: t.String(),
+      orderId: t.String({ description: 'Order UUID ที่ต้องการชำระ' }),
     }),
   })
 
-  // ── PATCH /payments/:id/confirm ──────────────────────────────────────
-  // Admin กด confirm ว่าได้รับเงินแล้ว (หลังเห็น slip)
-  .patch('/:id/confirm', async ({ params, body, set }) => {
-    const payment = await db
-      .select()
-      .from(payments)
+  .patch('/:id/confirm', async ({ params, body }) => {
+    const payment = await db.select().from(payments)
+      .where(eq(payments.id, params.id)).limit(1).then(r => r[0])
+    if (!payment) return { success: false, message: 'ไม่พบ Payment', data: null }
+    await db.update(payments)
+      .set({ status: 'success', slipImageUrl: body.slipImageUrl ?? null, paidAt: new Date() })
       .where(eq(payments.id, params.id))
-      .limit(1)
-      .then(r => r[0])
-
-    if (!payment) {
-      set.status = 404
-      return { success: false, message: 'ไม่พบ Payment', data: null }
-    }
-
-    // อัปเดต payment เป็น success
-    await db
-      .update(payments)
-      .set({
-        status:       'success',
-        slipImageUrl: body.slipImageUrl ?? null,
-        paidAt:       new Date(),
-      })
-      .where(eq(payments.id, params.id))
-
-    // อัปเดต order ว่าชำระแล้ว
-    await db
-      .update(orders)
-      .set({ paymentStatus: 'paid' })
+    await db.update(orders).set({ paymentStatus: 'paid' })
       .where(eq(orders.id, payment.orderId))
-
     return { success: true, message: 'Confirm การชำระเงินสำเร็จ', data: null }
   }, {
+    tags:    ['Payments'],
+    summary: 'Admin Confirm รับเงินแล้ว',
+    detail:  {
+      description: '**Role:** admin, staff\n\nกด confirm หลังเห็น slip จากลูกค้า',
+      security: [{ BearerAuth: [] }],
+    },
     beforeHandle: [requireRole(['admin', 'staff'])],
-    params: t.Object({ id: t.String() }),
+    params: t.Object({ id: t.String({ description: 'Payment UUID' }) }),
     body: t.Object({
-      slipImageUrl: t.Optional(t.String()),
-    }),
-  })
+      slipImageUrl: t.Optional(t.String({ description: 'URL รูป slip (optional)' }

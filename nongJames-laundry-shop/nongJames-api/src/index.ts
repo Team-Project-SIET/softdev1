@@ -17,36 +17,32 @@ const app = new Elysia()
     origin:      process.env.WEB_URL || 'http://localhost:3000',
     credentials: true,
   }))
-
-  // ── Swagger ───────────────────────────────────────────────────────────
-  // เปิด http://localhost:8000/swagger เพื่อดู API docs
   .use(swagger({
     path: '/swagger',
     documentation: {
       info: {
         title:       '🧺 NJ Laundry API',
-        description: 'ระบบบริหารจัดการร้านซักรีด NongJames (nongJames-api)',
+        description: 'ระบบบริหารจัดการร้านซักรีด NongJames — Backend API Documentation',
         version:     '1.0.0',
       },
-      // จัดกลุ่ม routes ด้วย tags
       tags: [
-        { name: 'Health',        description: 'เช็คสถานะ API' },
-        { name: 'Auth',          description: 'Authentication — LINE / Google OAuth2' },
-        { name: 'Orders',        description: 'จัดการ Orders' },
-        { name: 'Customers',     description: 'จัดการลูกค้า' },
-        { name: 'Services',      description: 'จัดการบริการ Catalog' },
-        { name: 'Logistics',     description: 'มอบหมายงาน Driver' },
-        { name: 'Payments',      description: 'การชำระเงิน' },
-        { name: 'Finance',       description: 'การเงิน Dashboard' },
-        { name: 'Notifications', description: 'LINE Push Notification' },
+        { name: 'Health',         description: '🟢 เช็คสถานะ API' },
+        { name: 'Auth',           description: '🔐 Authentication — LINE / Google OAuth2 + JWT' },
+        { name: 'Orders',         description: '📦 จัดการ Orders' },
+        { name: 'Customers',      description: '👥 จัดการลูกค้า B2C / B2B' },
+        { name: 'Services',       description: '🧺 Catalog บริการซักรีด' },
+        { name: 'Logistics',      description: '🚗 มอบหมายงาน Driver' },
+        { name: 'Payments',       description: '💳 การชำระเงิน' },
+        { name: 'Finance',        description: '💰 Financial Dashboard + SCB API' },
+        { name: 'Notifications',  description: '🔔 LINE Push Notification' },
       ],
-      // ตั้ง Bearer Auth ให้ใส่ JWT token ใน Swagger UI ได้เลย
       components: {
         securitySchemes: {
           BearerAuth: {
-            type: 'http',
-            scheme: 'bearer',
+            type:         'http',
+            scheme:       'bearer',
             bearerFormat: 'JWT',
+            description:  'ใส่ JWT token ที่ได้จาก /auth/line หรือ /auth/google',
           },
         },
       },
@@ -58,8 +54,9 @@ const app = new Elysia()
     message:   '🦊 NJ Laundry API is running',
     timestamp: new Date().toISOString(),
   }), {
-    // บอก Swagger ว่า route นี้อยู่ใน tag ไหน
-    tags: ['Health'],
+    tags:    ['Health'],
+    summary: 'เช็คสถานะ API',
+    detail:  { description: 'ใช้ ping ว่า server ยังทำงานอยู่ไหม ไม่ต้อง auth' },
   })
 
   .use(authRoutes)
