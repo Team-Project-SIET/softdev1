@@ -1,4 +1,4 @@
-import { db, orders, orderItems, orderWorkflowHistory, customers, users } from '../../db';
+import { db, orders, orderItems, orderWorkflowHistory, customers, users } from '../../../db';
 import { eq, desc, and } from 'drizzle-orm';
 
 /**

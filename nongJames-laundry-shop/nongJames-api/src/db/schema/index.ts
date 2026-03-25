@@ -10,9 +10,6 @@ export * from './oauth-accounts';
 // Orders & Workflow
 export {
   orders,
-  orderItems,
-  orderWorkflow,
-  orderStatusHistory,
   orderStatusEnum,
   orderTypeEnum,
   deliveryTypeEnum,

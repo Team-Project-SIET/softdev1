@@ -7,12 +7,12 @@ const JWT_SECRET = process.env.JWT_SECRET!;
 export function createOrderRoutes() {
   const ordersController = new OrdersController();
 
-  return new Elysia({ prefix: '/orders' })
+  return new Elysia({ prefix: '/api/orders' })
     .use(authPlugin(JWT_SECRET))
 
     // Create order - Admin/Staff only
     .post('/', (ctx) => ordersController.createOrder(ctx.body, ctx), {
-      beforeHandle: [requireRole(['admin', 'staff'])],
+      beforeHandle: [requireRole(['ADMIN', 'STAFF'])],
       body: t.Object({
         customerId: t.String(),
         orderType: t.Union([t.Literal('b2c'), t.Literal('b2b')]),
@@ -29,7 +29,7 @@ export function createOrderRoutes() {
 
     // List all orders - Admin/Staff
     .get('/', (ctx) => ordersController.listOrders(ctx.query, ctx), {
-      beforeHandle: [requireRole(['admin', 'staff'])],
+      beforeHandle: [requireRole(['ADMIN', 'STAFF'])],
       query: t.Object({
         status: t.Optional(t.String()),
         customerId: t.Optional(t.String()),
@@ -46,7 +46,7 @@ export function createOrderRoutes() {
 
     // Update order - Admin/Staff only
     .patch('/:id', (ctx) => ordersController.updateOrder(ctx.params, ctx.body, ctx), {
-      beforeHandle: [requireRole(['admin', 'staff'])],
+      beforeHandle: [requireRole(['ADMIN', 'STAFF'])],
       params: t.Object({ id: t.String() }),
       body: t.Object({
         pickupAddress: t.Optional(t.String()),
@@ -55,15 +55,15 @@ export function createOrderRoutes() {
       }),
     })
 
-    // Delete order - Admin only
+    // Delete order - Admin/Staff only
     .delete('/:id', (ctx) => ordersController.deleteOrder(ctx.params, ctx), {
-      beforeHandle: [requireRole(['admin', 'staff'])],
+      beforeHandle: [requireRole(['ADMIN', 'STAFF'])],
       params: t.Object({ id: t.String() }),
     })
 
     // Transition order status - Admin/Staff/Driver
     .post('/:id/status', (ctx) => ordersController.transitionOrder(ctx.params, ctx.body, ctx), {
-      beforeHandle: [requireRole(['admin', 'staff', 'driver'])],
+      beforeHandle: [requireRole(['ADMIN', 'STAFF', 'DRIVER'])],
       params: t.Object({ id: t.String() }),
       body: t.Object({
         status: t.Union([

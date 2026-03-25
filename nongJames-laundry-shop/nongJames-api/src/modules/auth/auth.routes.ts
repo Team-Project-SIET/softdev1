@@ -7,9 +7,9 @@ const JWT_SECRET = process.env.JWT_SECRET!;
 export function createAuthRoutes() {
   const authController = new AuthController();
 
-  return new Elysia({ prefix: '/auth' })
+  return new Elysia({ prefix: '/api/auth' })
     // Login - no auth required
-    .post('/login', (ctx) => authController.login(ctx.body), {
+    .post('/login', (ctx) => authController.login(ctx.body, ctx.jwt, ctx), {
       body: t.Object({
         email: t.String({ format: 'email' }),
         password: t.String({ minLength: 1 }),
@@ -17,23 +17,22 @@ export function createAuthRoutes() {
     })
 
     // Register - no auth required
-    .post('/register', (ctx) => authController.register(ctx.body), {
+    .post('/register', (ctx) => authController.register(ctx.body, ctx.jwt, ctx), {
       body: t.Object({
         name: t.String({ minLength: 1 }),
         email: t.String({ format: 'email' }),
         password: t.String({ minLength: 6 }),
         role: t.Optional(t.Union([
-          t.Literal('admin'),
-          t.Literal('staff'),
-          t.Literal('driver'),
-          t.Literal('executive'),
-          t.Literal('customer'),
+          t.Literal('ADMIN'),
+          t.Literal('STAFF'),
+          t.Literal('DRIVER'),
+          t.Literal('CUSTOMER'),
         ])),
       }),
     })
 
     // Refresh token - no auth required
-    .post('/refresh', (ctx) => authController.refreshToken(ctx.body, ctx), {
+    .post('/refresh', (ctx) => authController.refreshToken(ctx.body, ctx.jwt, ctx), {
       body: t.Object({
         refreshToken: t.String(),
       }),
@@ -48,7 +47,7 @@ export function createAuthRoutes() {
     })
 
     // Get profile - requires auth
-    .get('/profile', (ctx) => authController.getProfile(ctx), {
+    .get('/profile', (ctx) => authController.getProfile(ctx.user, ctx), {
       beforeHandle: [requireAuth],
     });
 }

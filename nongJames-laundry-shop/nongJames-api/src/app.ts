@@ -74,9 +74,6 @@ export function createApp(): Elysia {
     // ────────────────────────────────────────────────────────
     // ERROR HANDLING
     // ────────────────────────────────────────────────────────
-    .error({ error: 'NOT_FOUND' }, () => {
-      return errorResponse('NOT_FOUND', 'Endpoint not found', null);
-    })
     .onError(({ code, error, request }) => {
       const timestamp = new Date().toISOString();
       console.error(`[${timestamp}] ERROR ${request.method} ${request.url}:`, error);

@@ -129,21 +129,21 @@ export const orderRoutes = new Elysia({ prefix: '/orders' })
     if (items.length > 0) {
       await db.insert(orderItems).values(
         items.map(i => ({
-          orderId:   newOrder.id,
-          serviceId: i.serviceId,
-          quantity:  i.quantity.toString(),
-          unitPrice: i.unitPrice.toString(),
-          subtotal:  (i.quantity * i.unitPrice).toString(),
+          orderId:    newOrder.id,
+          serviceId:  i.serviceId,
+          quantity:   i.quantity,
+          unitPrice:  i.unitPrice.toString(),
+          totalPrice: (i.quantity * i.unitPrice).toString(),
         }))
       )
     }
 
     // ⑤ บันทึก log ว่าสร้าง order แล้ว
     await db.insert(orderStatusHistory).values({
-      orderId:   newOrder.id,
+      orderId:  newOrder.id,
       changedBy: user.userId,
-      status:    'PENDING_PICKUP',
-      note:      'Order created by staff',
+      toStatus: 'PENDING_PICKUP',
+      notes:    'Order created by staff',
     })
 
     set.status = 201

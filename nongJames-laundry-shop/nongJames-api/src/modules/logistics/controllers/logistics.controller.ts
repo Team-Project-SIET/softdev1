@@ -1,4 +1,4 @@
-import { db, driverTasks, orders, users, customers } from '../../db';
+import { db, driverTasks, orders, users, customers } from '../../../db';
 import { eq, and, desc } from 'drizzle-orm';
 
 /**
@@ -41,11 +41,11 @@ export class LogisticsController {
 
   /**
    * Get driver by ID
-   * GET /logistics/drivers/:id
+   * GET /logistics/drivers/:driverId
    */
   async getDriver(params: any) {
     try {
-      const { id } = params;
+      const { driverId } = params;
 
       const [driver] = await db
         .select({
@@ -56,7 +56,7 @@ export class LogisticsController {
           createdAt: users.createdAt,
         })
         .from(users)
-        .where(and(eq(users.id, id), eq(users.role, 'DRIVER')))
+        .where(and(eq(users.id, driverId), eq(users.role, 'DRIVER')))
         .limit(1);
 
       if (!driver) {
@@ -69,7 +69,7 @@ export class LogisticsController {
           id: driverTasks.id,
         })
         .from(driverTasks)
-        .where(eq(driverTasks.driverId, id));
+        .where(eq(driverTasks.driverId, driverId));
 
       return {
         success: true,

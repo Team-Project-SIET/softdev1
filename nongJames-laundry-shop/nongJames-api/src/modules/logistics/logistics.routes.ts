@@ -7,33 +7,33 @@ const JWT_SECRET = process.env.JWT_SECRET!;
 export function createLogisticsRoutes() {
   const logisticsController = new LogisticsController();
 
-  return new Elysia({ prefix: '/logistics' })
+  return new Elysia({ prefix: '/api/logistics' })
     .use(authPlugin(JWT_SECRET))
 
     // Driver management - Admin only
-    .post('/drivers', (ctx) => logisticsController.createDriver(ctx.body), {
-      beforeHandle: [requireRole(['admin'])],
+    .post('/drivers', (ctx) => logisticsController.createDriver(ctx.body, ctx), {
+      beforeHandle: [requireRole(['ADMIN'])],  
       body: t.Object({
         name: t.String({ minLength: 1 }),
         email: t.String({ format: 'email' }),
         phone: t.Optional(t.String()),
       }),
     })
-    .get('/drivers', (ctx) => logisticsController.listDrivers(ctx.query), {
-      beforeHandle: [requireRole(['admin', 'staff'])],
+    .get('/drivers', (ctx) => logisticsController.listDrivers(ctx.query, ctx), {
+      beforeHandle: [requireRole(['ADMIN', 'STAFF'])],      
       query: t.Object({
         limit: t.Optional(t.String()),
         page: t.Optional(t.String()),
       }),
     })
-    .get('/drivers/:id', (ctx) => logisticsController.getDriver(ctx.params), {
-      beforeHandle: [requireRole(['admin', 'staff'])],
-      params: t.Object({ id: t.String() }),
+    .get('/drivers/:driverId', (ctx) => logisticsController.getDriver(ctx.params, ctx), {
+      beforeHandle: [requireRole(['ADMIN', 'STAFF'])],
+      params: t.Object({ driverId: t.String() }),
     })
 
     // Order assignments - Admin/Staff
-    .post('/assignments', (ctx) => logisticsController.assignOrder(ctx.body), {
-      beforeHandle: [requireRole(['admin', 'staff'])],
+    .post('/assignments', (ctx) => logisticsController.assignOrder(ctx.body, ctx), {
+      beforeHandle: [requireRole(['ADMIN', 'STAFF'])],
       body: t.Object({
         orderId: t.String(),
         driverId: t.String(),
@@ -41,14 +41,14 @@ export function createLogisticsRoutes() {
         notes: t.Optional(t.String()),
       }),
     })
-    .get('/drivers/:driverId/assignments', (ctx) => logisticsController.getAssignments(ctx.params), {
-      beforeHandle: [requireRole(['admin', 'staff', 'driver'])],
+    .get('/drivers/:driverId/assignments', (ctx) => logisticsController.getAssignments(ctx.params, ctx), {
+      beforeHandle: [requireRole(['ADMIN', 'STAFF', 'DRIVER'])],
       params: t.Object({ driverId: t.String() }),
     })
 
     // Task status updates - Driver/Admin
     .patch('/tasks/:id/status', (ctx) => logisticsController.updateTaskStatus(ctx.params, ctx.body, ctx), {
-      beforeHandle: [requireRole(['driver', 'admin'])],
+      beforeHandle: [requireRole(['DRIVER', 'ADMIN'])],
       params: t.Object({ id: t.String() }),
       body: t.Object({
         status: t.Union([
@@ -60,14 +60,14 @@ export function createLogisticsRoutes() {
     })
 
     // Tracking - All authenticated users
-    .get('/orders/:orderId/status', (ctx) => logisticsController.getDeliveryStatus(ctx.params), {
-      beforeHandle: [requireRole(['admin', 'staff', 'driver', 'customer'])],
+    .get('/orders/:orderId/status', (ctx) => logisticsController.getDeliveryStatus(ctx.params, ctx), {
+      beforeHandle: [requireRole(['ADMIN', 'STAFF', 'DRIVER', 'CUSTOMER'])],
       params: t.Object({ orderId: t.String() }),
     })
 
     // Driver location updates
     .post('/drivers/:driverId/location', (ctx) => logisticsController.updateLocation(ctx.body, ctx), {
-      beforeHandle: [requireRole(['driver'])],
+      beforeHandle: [requireRole(['DRIVER'])],
       params: t.Object({ driverId: t.String() }),
       body: t.Object({
         latitude: t.Number(),

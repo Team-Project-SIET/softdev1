@@ -1,4 +1,4 @@
-import { db, payments, orders, transactions, expenses, users, customers, invoices, financialReports } from '../../db';
+import { db, payments, orders, transactions, expenses, users, customers, invoices, financialReports } from '../../../db';
 import { eq, and, gte, lte, desc, sum } from 'drizzle-orm';
 
 /**

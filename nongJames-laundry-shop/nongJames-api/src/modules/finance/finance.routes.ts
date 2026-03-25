@@ -7,7 +7,7 @@ const JWT_SECRET = process.env.JWT_SECRET!;
 export function createFinanceRoutes() {
   const financeController = new FinanceController();
 
-  return new Elysia({ prefix: '/finance' })
+  return new Elysia({ prefix: '/api/finance' })
     .use(authPlugin(JWT_SECRET))
 
     // ═══════════════════════════════════════════════════════════════════
@@ -15,8 +15,8 @@ export function createFinanceRoutes() {
     // ═══════════════════════════════════════════════════════════════════
 
     // Create payment record
-    .post('/payments', (ctx) => financeController.createPayment(ctx.body), {
-      beforeHandle: [requireRole(['admin', 'staff'])],
+    .post('/payments', (ctx) => financeController.createPayment(ctx.body, ctx), {
+      beforeHandle: [requireRole(['ADMIN', 'STAFF'])],
       body: t.Object({
         orderId: t.String(),
         amount: t.Number(),
@@ -31,14 +31,14 @@ export function createFinanceRoutes() {
     })
 
     // Get payment by ID
-    .get('/payments/:id', (ctx) => financeController.getPayment(ctx.params), {
-      beforeHandle: [requireRole(['admin', 'staff'])],
+    .get('/payments/:id', (ctx) => financeController.getPayment(ctx.params, ctx), {
+      beforeHandle: [requireRole(['ADMIN', 'STAFF'])],
       params: t.Object({ id: t.String() }),
     })
 
     // Get payments for an order
-    .get('/orders/:orderId/payments', (ctx) => financeController.getOrderPayments(ctx.params), {
-      beforeHandle: [requireRole(['admin', 'staff'])],
+    .get('/orders/:orderId/payments', (ctx) => financeController.getOrderPayments(ctx.params, ctx), {
+      beforeHandle: [requireRole(['ADMIN', 'STAFF'])],
       params: t.Object({ orderId: t.String() }),
     })
 
@@ -47,8 +47,8 @@ export function createFinanceRoutes() {
     // ═══════════════════════════════════════════════════════════════════
 
     // Initiate SCB payment
-    .post('/payments/scb/initiate', (ctx) => financeController.initiateScbPayment(ctx.body), {
-      beforeHandle: [requireRole(['admin', 'staff'])],
+    .post('/payments/scb/initiate', (ctx) => financeController.initiateScbPayment(ctx.body, ctx), {
+      beforeHandle: [requireRole(['ADMIN', 'STAFF'])],
       body: t.Object({
         orderId: t.String(),
         amount: t.Number(),
@@ -65,13 +65,13 @@ export function createFinanceRoutes() {
     })
 
     // Sync SCB transactions
-    .post('/transactions/sync', () => financeController.syncScbTransactions(), {
-      beforeHandle: [requireRole(['admin'])],
+    .post('/transactions/sync', (ctx) => financeController.syncScbTransactions(ctx), {
+      beforeHandle: [requireRole(['ADMIN'])],
     })
 
     // Get bank transactions
-    .get('/transactions', () => financeController.getTransactions(), {
-      beforeHandle: [requireRole(['admin', 'executive'])],
+    .get('/transactions', (ctx) => financeController.getTransactions(ctx), {
+      beforeHandle: [requireRole(['ADMIN', 'EXECUTIVE'])],
     })
 
     // ═══════════════════════════════════════════════════════════════════
@@ -79,8 +79,8 @@ export function createFinanceRoutes() {
     // ═══════════════════════════════════════════════════════════════════
 
     // Create expense
-    .post('/expenses', (ctx) => financeController.createExpense(ctx.body, ctx.user), {
-      beforeHandle: [requireRole(['admin', 'staff'])],
+    .post('/expenses', (ctx) => financeController.createExpense(ctx.body, ctx.user, ctx), {
+      beforeHandle: [requireRole(['ADMIN', 'STAFF'])],
       body: t.Object({
         category: t.Union([
           t.Literal('utilities'),
@@ -97,7 +97,7 @@ export function createFinanceRoutes() {
     })
 
     // Get expenses
-    .get('/expenses', () => financeController.getExpenses(), {
+    .get('/expenses', (ctx) => financeController.getExpenses(ctx), {
       beforeHandle: [requireRole(['admin', 'executive'])],
     })
 
