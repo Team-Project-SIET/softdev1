@@ -1,144 +1,144 @@
 # NongJames Laundry Management API
 
-🚀 B2C & B2B Laundry Management System with ORDER WORKFLOW, LOGISTICS, FINANCE, SCB & LINE Integration
+🚀 ระบบจัดการร้านซักอบรีดแบบ B2C & B2B พร้อม ORDER WORKFLOW, LOGISTICS, FINANCE ส่วนรวม SCB & LINE Integration
 
-**Status**: ✅ Core backend functional | 🟢 Ready for testing
+**สถานะ**: ✅ Backend หลักทำงานได้ | 🟢 พร้อมทดสอบ
 
 ---
 
-## 📋 Quick Start
+## 📋 เริ่มต้นอย่างรวดเร็ว
 
-### Prerequisites
-- Bun or Node.js installed
-- PostgreSQL database running
-- `.env` file configured (see Environment Variables)
+### ข้อกำหนดเบื้องต้น
+- Bun หรือ Node.js ติดตั้งแล้ว
+- PostgreSQL Database ทำงานอยู่
+- ไฟล์ `.env` ตั้งค่าเรียบร้อย (ดู Environment Variables)
 
-### Installation & Running
+### การติดตั้งและการรัน
 
 ```bash
-# 1. Install dependencies
+# 1. ติดตั้ง dependencies
 bun install
-# or: npm install
+# หรือ: npm install
 
-# 2. Setup database (if first time)
+# 2. ตั้งค่า database (ครั้งแรก)
 bun run drizzle-kit push:pg
 
-# 3. Start development server
+# 3. เริ่มต้น Development Server
 bun run dev
 # Server: http://localhost:3000
 # API Docs: http://localhost:3000/docs
 # Health: http://localhost:3000/health
 
-# Or production:
+# หรือ Production:
 bun run start
 ```
 
 ---
 
-## 🏛️ Architecture Overview
+## 🏛️ ภาพรวมสถาปัตยกรรม
 
-### Tech Stack
-- **Runtime**: Bun (fast) + Node.js compatible
+### Stack เทคโนโลยี
+- **Runtime**: Bun (เร็ว) + Node.js compatible
 - **Framework**: Elysia (TypeScript HTTP API framework)
 - **Database**: PostgreSQL + Drizzle ORM
 - **Auth**: JWT (Bearer tokens) + bcryptjs (password hashing)
 - **Integrations**: SCB Payment API, LINE Messaging API
 
-### Project Structure
+### โครงสร้างโปรเจกต์
 ```
 src/
-├── app.ts                 # Main application setup
-├── db.ts                  # Database configuration
-├── index.ts               # Entry point
-├── modules/               # Feature modules
-│   ├── auth/              # User authentication ✅
-│   ├── orders/            # Order management ⚠️
-│   ├── logistics/         # Driver & delivery 🔴
-│   ├── finance/           # Payments & invoicing 🔴
-│   └── notifications/     # Notifications 🔴
-├── db/schema/             # Database schema ✅
-├── middlewares/           # Auth middleware ✅
-├── integrations/          # 3rd party APIs
-│   ├── scb/               # SCB payment 🔴
-│   └── line/              # LINE messaging 🔴
-├── common/                # Shared utilities ✅
-└── routes/                # Route handlers
+├── app.ts                 # โครงสร้าง application หลัก
+├── db.ts                  # ตั้งค่าฐานข้อมูล
+├── index.ts               # จุดเริ่มต้นของโปรแกรม
+├── modules/               # Module ของแต่ละฟีเจอร์
+│   ├── auth/              # ระบบ Authentication ✅
+│   ├── orders/            # จัดการคำสั่งซื้อ ⚠️
+│   ├── logistics/         # คนขับและการจัดส่ง 🔴
+│   ├── finance/           # การชำระเงินและการเงิน 🔴
+│   └── notifications/     # การแจ้งเตือน 🔴
+├── db/schema/             # Schema ฐานข้อมูล ✅
+├── middlewares/           # Auth Middleware ✅
+├── integrations/          # API ภายนอก
+│   ├── scb/               # SCB Payment 🔴
+│   └── line/              # LINE Messaging 🔴
+├── common/                # Utilities ร่วมกัน ✅
+└── routes/                # Route Handlers
 ```
 
-**Status Legend**: ✅ Complete | ⚠️ Needs Testing | 🔴 Needs Implementation
+**สัญลักษณ์สถานะ**: ✅ เสร็จสมบูรณ์ | ⚠️ รอการทดสอบ | 🔴 รอการพัฒนา
 
 ---
 
-## 🔐 API Endpoints & Authentication
+## 🔐 Endpoint API & Authentication
 
-### Authentication Flow
+### กระบวนการ Authentication
 ```
-1. Register → POST /api/auth/register
+1. สมัครสมาชิก → POST /api/auth/register
    ↓
-2. Login → POST /api/auth/login (get JWT tokens)
+2. เข้าสู่ระบบ → POST /api/auth/login (รับ JWT tokens)
    ↓
-3. Use Authorization: Bearer <accessToken>
+3. ใช้ Authorization: Bearer <accessToken>
    ↓
-4. Access protected endpoints
+4. เข้าใช้ Endpoint ที่ปิดกั้น
    ↓
-5. Refresh → POST /api/auth/refresh (get new token)
+5. Refresh → POST /api/auth/refresh (รับ Token ใหม่)
 ```
 
-### Core Endpoints
+### Endpoint หลัก
 
-#### Auth Module (`/api/auth`)
+#### Module Auth (`/api/auth`)
 ```
-POST   /api/auth/register      - Register new user
-POST   /api/auth/login         - Login & get JWT
-POST   /api/auth/refresh       - Refresh access token
-POST   /api/auth/logout        - Logout
-GET    /api/auth/profile       - Get user profile (requires auth)
-```
-
-#### Orders Module (`/api/orders`)
-```
-POST   /api/orders             - Create order (Admin/Staff)
-GET    /api/orders             - List orders with pagination
-GET    /api/orders/:id         - Get order details
-PATCH  /api/orders/:id         - Update order
-DELETE /api/orders/:id         - Cancel order
-POST   /api/orders/:id/status  - Update order status (workflow)
+POST   /api/auth/register      - สมัครสมาชิกใหม่
+POST   /api/auth/login         - เข้าสู่ระบบและรับ JWT
+POST   /api/auth/refresh       - Refresh Access Token
+POST   /api/auth/logout        - ออกจากระบบ
+GET    /api/auth/profile       - ดึงข้อมูลโปรไฟล์ (ต้อง auth)
 ```
 
-#### Logistics Module (`/api/logistics`)
+#### Module Orders (`/api/orders`)
 ```
-POST   /api/logistics/drivers                          - Create driver
-GET    /api/logistics/drivers                          - List drivers
-GET    /api/logistics/drivers/:driverId                - Get driver details
-POST   /api/logistics/assignments                      - Assign order to driver
-GET    /api/logistics/drivers/:driverId/assignments   - Get driver tasks
-PATCH  /api/logistics/tasks/:id/status                - Update task status
-GET    /api/logistics/orders/:orderId/status          - Track delivery
-POST   /api/logistics/drivers/:driverId/location      - Update location
+POST   /api/orders             - สร้างคำสั่งซื้อ (Admin/Staff)
+GET    /api/orders             - แสดงรายการคำสั่งซื้อ (มี pagination)
+GET    /api/orders/:id         - ดึงรายละเอียดคำสั่งซื้อ
+PATCH  /api/orders/:id         - แก้ไขคำสั่งซื้อ
+DELETE /api/orders/:id         - ยกเลิกคำสั่งซื้อ
+POST   /api/orders/:id/status  - อัปเดตสถานะคำสั่งซื้อ (workflow)
 ```
 
-#### Finance Module (`/api/finance`)
+#### Module Logistics (`/api/logistics`)
 ```
-POST   /api/finance/payments                   - Create payment
-GET    /api/finance/payments/:id               - Get payment details
-POST   /api/finance/scb/initiate               - Initiate SCB payment
-POST   /api/finance/scb/callback               - SCB webhook (auto)
-GET    /api/finance/transactions               - List transactions
-POST   /api/finance/expenses                   - Create expense
+POST   /api/logistics/drivers                          - สร้างคนขับ
+GET    /api/logistics/drivers                          - แสดงรายการคนขับ
+GET    /api/logistics/drivers/:driverId                - ดึงข้อมูลคนขับ
+POST   /api/logistics/assignments                      - มอบหมายคำสั่งซื้อให้คนขับ
+GET    /api/logistics/drivers/:driverId/assignments   - ดึงงานของคนขับ
+PATCH  /api/logistics/tasks/:id/status                - อัปเดตสถานะงาน
+GET    /api/logistics/orders/:orderId/status          - ติดตามการจัดส่ง
+POST   /api/logistics/drivers/:driverId/location      - อัปเดตตำแหน่งคนขับ
+```
+
+#### Module Finance (`/api/finance`)
+```
+POST   /api/finance/payments                   - สร้างการชำระเงิน
+GET    /api/finance/payments/:id               - ดึงรายละเอียดการชำระเงิน
+POST   /api/finance/scb/initiate               - เริ่มการชำระเงิน SCB
+POST   /api/finance/scb/callback               - SCB webhook (อัตโนมัติ)
+GET    /api/finance/transactions               - แสดงรายการธุรกรรม
+POST   /api/finance/expenses                   - สร้างรายการค่าใช้จ่าย
 ```
 
 ### Health & Info
 ```
-GET    /health                 - Health check
-GET    /api/info               - API information
-GET    /api/version            - API version
+GET    /health                 - ตรวจสอบสถานะ
+GET    /api/info               - ข้อมูล API
+GET    /api/version            - เวอร์ชัน API
 ```
 
-### Standard Response Format
+### รูปแบบการตอบสนอง (Response)
 ```json
 {
   "success": true/false,
-  "message": "Human readable message",
+  "message": "ข้อความอ่านง่าย",
   "data": {},
   "timestamp": "2026-03-25T..."
 }
@@ -146,35 +146,35 @@ GET    /api/version            - API version
 
 ---
 
-## 🗄️ Database Schema
+## 🗄️ Schema ฐานข้อมูล
 
-### Core Tables
+### ตารางหลัก
 
-| Table | Purpose | Status |
+| ตารางข้อมูล | วัตถุประสงค์ | สถานะ |
 |-------|---------|--------|
-| `users` | User accounts (all roles) | ✅ |
-| `customers` | Customer profiles | ✅ |
-| `orders` | Order records | ✅ |
-| `orderItems` | Line items per order | ✅ |
-| `orderWorkflowHistory` | Order status changes | ✅ |
-| `payments` | Payment records | ✅ |
-| `transactions` | Financial transactions | ✅ |
-| `expenses` | Expense tracking | ✅ |
-| `driverTasks` | Driver assignments | ✅ |
-| `logistics` | Delivery tracking | ✅ |
+| `users` | บัญชีผู้ใช้งาน (ทุก Role) | ✅ |
+| `customers` | โปรไฟล์ลูกค้า | ✅ |
+| `orders` | บันทึกคำสั่งซื้อ | ✅ |
+| `orderItems` | รายการสินค้าต่อคำสั่งซื้อ | ✅ |
+| `orderWorkflowHistory` | ประวัติการเปลี่ยนสถานะคำสั่งซื้อ | ✅ |
+| `payments` | บันทึกการชำระเงิน | ✅ |
+| `transactions` | ธุรกรรมการเงิน | ✅ |
+| `expenses` | บันทึกค่าใช้จ่าย | ✅ |
+| `driverTasks` | การมอบหมายงานให้คนขับ | ✅ |
+| `logistics` | การติดตามการจัดส่ง | ✅ |
 
-### User Roles
-- `ADMIN` - Full system access
-- `STAFF` - Create orders, manage logistics
-- `DRIVER` - View assigned tasks, update location
-- `CUSTOMER` - Create orders, view own orders
-- `EXECUTIVE` - Financial reporting & analytics
+### บทบาทผู้ใช้งาน (User Roles)
+- `ADMIN` - เข้าใช้งานระบบแบบเต็มที่
+- `STAFF` - สร้างคำสั่งซื้อ จัดการ Logistics
+- `DRIVER` - ดูงานที่ได้รับมอบหมาย อัปเดตตำแหน่งที่อยู่
+- `CUSTOMER` - สร้างคำสั่งซื้อ ดูคำสั่งซื้อของตนเอง
+- `EXECUTIVE` - รายงานการเงินและวิเคราะห์
 
 ---
 
-## 🔑 Environment Variables
+## 🔑 ตัวแปร Environment
 
-Create `.env` file in root:
+สร้างไฟล์ `.env` ในโฟลเดอร์ root:
 ```env
 # Database
 DATABASE_URL=postgresql://postgres:password@localhost:5432/laundry
@@ -202,14 +202,14 @@ LINE_ACCESS_TOKEN=your-access-token
 
 ---
 
-## 📝 Testing
+## 📝 การทดสอบ
 
-### With cURL
+### ใช้ cURL
 ```bash
-# Health check
+# ตรวจสอบสถานะ
 curl http://localhost:3000/health
 
-# Register user
+# สมัครสมาชิก
 curl -X POST http://localhost:3000/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{
@@ -219,7 +219,7 @@ curl -X POST http://localhost:3000/api/auth/register \
     "role": "CUSTOMER"
   }'
 
-# Login
+# เข้าสู่ระบบ
 curl -X POST http://localhost:3000/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
@@ -228,95 +228,95 @@ curl -X POST http://localhost:3000/api/auth/login \
   }'
 ```
 
-### With Postman
-See [POSTMAN_TESTING_GUIDE.md](./POSTMAN_TESTING_GUIDE.md) for comprehensive testing instructions and collections.
+### ใช้ Postman
+ดู [POSTMAN_TESTING_GUIDE.md](./POSTMAN_TESTING_GUIDE.md) สำหรับคำแนะนำการทดสอบแบบละเอียดและ Collection ต่างๆ
 
 ---
 
-## ✅ Completed Tasks
+## ✅ งานที่เสร็จสมบูรณ์
 
-### Core Implementation
-- ✅ Authentication system (password hashing, JWT tokens)
-- ✅ API route structure with `/api` prefix
-- ✅ Role-Based Access Control (RBAC) with uppercase roles
-- ✅ Database schema with Drizzle ORM
-- ✅ Error handling middleware
-- ✅ Request logging
-- ✅ Environment configuration
+### การพัฒนาหลัก
+- ✅ ระบบ Authentication (password hashing, JWT tokens)
+- ✅ โครงสร้าง API Route ด้วย `/api` prefix
+- ✅ Role-Based Access Control (RBAC) ด้วย uppercase roles
+- ✅ Schema ฐานข้อมูลโดยใช้ Drizzle ORM
+- ✅ Error Handling Middleware
+- ✅ Request Logging
+- ✅ ตั้งค่า Environment
 
-### Testing & Documentation
-- ✅ Comprehensive Postman testing guide
-- ✅ API endpoint documentation
-- ✅ All TypeScript files compile without errors
-- ✅ Backend runs successfully on localhost:3000
+### การทดสอบและเอกสาร
+- ✅ คู่มือการทดสอบ Postman
+- ✅ เอกสาร Endpoint API
+- ✅ ไฟล์ TypeScript ทั้งหมดโปรแกรมได้สำเร็จโดยไม่มีข้อผิดพลาด
+- ✅ Backend ทำงานได้สำเร็จบน localhost:3000
 
 ---
 
-## 🔴 TODO - Critical Items (High Priority)
+## 🔴 TODO - รายการสำคัญ (High Priority)
 
-### Database Setup
+### ตั้งค่าฐานข้อมูล
 ```bash
-# Initialize database
+# สร้าง Migration
 bun run drizzle-kit push:pg
 
-# Verify tables created
+# ตรวจสอบตารางที่สร้าง
 bun run drizzle-kit studio
 ```
 
-### Controller Implementation
-- [ ] Complete Orders Controller methods
-- [ ] Complete Logistics Controller methods
-- [ ] Complete Finance Controller methods
-- [ ] Complete Notifications Controller
+### การพัฒนา Controller
+- [ ] เสร็จสิ้นการทำ Orders Controller
+- [ ] เสร็จสิ้นการทำ Logistics Controller
+- [ ] เสร็จสิ้นการทำ Finance Controller
+- [ ] เสร็จสิ้นการทำ Notifications Controller
 
-### Integration Completion
-- [ ] SCB Payment API integration
-- [ ] LINE Messaging API integration
-- [ ] Webhook handlers for SCB & LINE
+### เสร็จสิ้นการ Integration
+- [ ] SCB Payment API Integration
+- [ ] LINE Messaging API Integration
+- [ ] Webhook Handlers สำหรับ SCB & LINE
 
-### Testing
-- [ ] Unit tests for services
-- [ ] Integration tests for endpoints
-- [ ] End-to-end workflow tests
-
----
-
-## 🟡 TODO - Important Items (Medium Priority)
-
-- [ ] Request validation middleware
-- [ ] Structured logging
-- [ ] Error tracking (Sentry)
-- [ ] Rate limiting
-- [ ] Input sanitization
-- [ ] CSRF protection
+### การทดสอบ
+- [ ] Unit Tests สำหรับ Services
+- [ ] Integration Tests สำหรับ Endpoints
+- [ ] End-to-End Workflow Tests
 
 ---
 
-## 🔵 TODO - Nice-to-Have (Low Priority)
+## 🟡 TODO - รายการที่สำคัญ (Medium Priority)
 
-- [ ] API versioning
-- [ ] Caching layer
-- [ ] Performance optimization
-- [ ] Automated backups
-- [ ] Monitoring dashboard
-- [ ] Advanced analytics
+- [ ] Request Validation Middleware
+- [ ] Structured Logging
+- [ ] Error Tracking (Sentry)
+- [ ] Rate Limiting
+- [ ] Input Sanitization
+- [ ] CSRF Protection
 
 ---
 
-## 📚 Documentation Files
+## 🔵 TODO - คุณสมบัติเพิ่มเติม (Low Priority)
 
-| File | Purpose | Location |
+- [ ] API Versioning
+- [ ] Caching Layer
+- [ ] Performance Optimization
+- [ ] Automated Backups
+- [ ] Monitoring Dashboard
+- [ ] Advanced Analytics
+
+---
+
+## 📚 ไฟล์เอกสาร
+
+| ไฟล์ | วัตถุประสงค์ | ตำแหน่ง |
 |------|---------|----------|
-| **README.md** (this file) | Main documentation | Root |
-| **POSTMAN_TESTING_GUIDE.md** | Complete API testing guide | Root |
-| **docs/archive/** | Archived technical guides | docs/ |
-| **SRS-002.md** | Business requirements | documents/SRS-laundry-shop/ |
+| **README.md** (ไฟล์นี้) | เอกสารหลัก | Root |
+| **POSTMAN_TESTING_GUIDE.md** | คู่มือการทดสอบ API | Root |
+| **docs/archive/** | เอกสารทางเทคนิคที่เก็บถาวร | docs/ |
+| **SRS-002.md** | ข้อกำหนดทางธุรกิจ | documents/SRS-laundry-shop/ |
 
 ---
 
-## 🔗 Important Links
+## 🔗 ลิงก์สำคัญ
 
-### External Resources
+### ทรัพยากรภายนอก
 - **Bun Documentation**: https://bun.sh
 - **Elysia Framework**: https://elysia.io/
 - **Drizzle ORM**: https://orm.drizzle.team/
@@ -328,50 +328,50 @@ bun run drizzle-kit studio
 
 ### Project Docs
 - **Business Requirements**: `documents/PM.XX/PM.00/SRS-laundry-shop/SRS-002.md`
-- **Technical Guides**: `docs/archive/` (archived guides)
+- **Technical Guides**: `docs/archive/` (เอกสารที่เก็บถาวร)
 
 ---
 
-## 🚨 Important Security Notes
+## 🚨 หมายเหตุเรื่องความปลอดภัยสำคัญ
 
-1. **Change JWT_SECRET in production** - Use strong, unique secret
-2. **Database credentials** - Use environment variables, never commit `.env`
-3. **CORS settings** - Restrict to specific origins in production
-4. **SSL/HTTPS** - Use in production (required for payment APIs)
-5. **API Keys** - Keep SCB and LINE credentials secure
+1. **เปลี่ยน JWT_SECRET ในสภาพแวดล้อม Production** - ใช้ Secret ที่แข็งแรงและไม่ซ้ำกัน
+2. **ข้อมูลประจำตัวฐานข้อมูล** - ใช้ Environment Variables ห้ามการสุ่ม `.env`
+3. **ตั้งค่า CORS** - จำกัดให้เฉพาะ Origins ที่ระบุใน Production
+4. **SSL/HTTPS** - ใช้ใน Production (จำเป็นสำหรับ Payment APIs)
+5. **API Keys** - เก็บข้อมูลประจำตัว SCB และ LINE ไว้อย่างปลอดภัย
 
 ---
 
-## 🆘 Troubleshooting
+## 🆘 แก้ไขปัญหา
 
-### Cannot find module error
-- Run `bun install` or `npm install`
-- Check import paths use correct relative paths
+### ข้อผิดพลาด Cannot find module
+- รัน `bun install` หรือ `npm install`
+- ตรวจสอบว่า Import Paths ใช้เส้นทางที่ถูกต้อง
 
-### Database connection refused
-- Verify PostgreSQL is running: `psql`
-- Check DATABASE_URL in `.env`
-- Verify database exists: `psql -l`
+### Database Connection Refused
+- ตรวจสอบ PostgreSQL ทำงานอยู่: `psql`
+- ตรวจสอบ DATABASE_URL ใน `.env`
+- ตรวจสอบฐานข้อมูลมีอยู่: `psql -l`
 
-### Port 3000 in use
+### Port 3000 ถูกใช้งานแล้ว
 ```bash
-# Kill process using port 3000
+# ปิด Process ที่ใช้ Port 3000
 lsof -ti :3000 | xargs kill -9
-# or
+# หรือ
 netstat -ano | findstr :3000
 ```
 
-### JWT token expired
-- Tokens expire after 7 days
-- Use `/api/auth/refresh` endpoint to get new token
-- See POSTMAN_TESTING_GUIDE.md for refresh flow
+### JWT Token หมดอายุ
+- Token หมดอายุหลังจาก 7 วัน
+- ใช้ Endpoint `/api/auth/refresh` เพื่อรับ Token ใหม่
+- ดู POSTMAN_TESTING_GUIDE.md สำหรับกระบวนการ Refresh
 
 ---
 
-## 📞 Support & Development
+## 📞 สนับสนุนและการพัฒนา
 
-**Development Status**: ACTIVE 🟢
+**สถานะการพัฒนา**: ทำงานอยู่ 🟢
 
-Last Updated: March 25, 2026
-Version: 1.0.0
-API Stability: Beta (core features working, some modules incomplete)
+อัปเดตล่าสุด: 25 มีนาคม 2026
+เวอร์ชัน: 1.0.0
+ความเสถียร API: Beta (ฟีเจอร์หลักทำงานได้ บางโมดูลยังไม่สมบูรณ์)
