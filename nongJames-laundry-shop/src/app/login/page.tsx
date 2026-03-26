@@ -12,7 +12,7 @@ const ROLE_REDIRECT: Record<string, string> = {
   admin:     '/admin/dashboard',
   driver:    '/driver/tasks',
   executive: '/executive/finance',
-  customer:  '/orders',
+  customer:  '/',
 }
 
 export default function LoginPage() {

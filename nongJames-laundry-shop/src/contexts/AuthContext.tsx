@@ -1,16 +1,5 @@
 'use client'
 
-/**
- * AuthContext คือ "กล่องเก็บข้อมูล user" ที่แชร์ให้ทุก component ใช้ได้
- *
- * วิธีทำงาน:
- * 1. ตอน app เปิด → อ่าน token จาก localStorage แล้วดึงข้อมูล user
- * 2. ทุก component ที่ต้องการข้อมูล user → เรียก useAuth()
- *
- * ตัวอย่างการใช้:
- * const { user, isAuthenticated, logout } = useAuth()
- */
-
 import {
   createContext, useContext,
   useState, useEffect,
@@ -19,7 +8,6 @@ import {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
-// ── Type ──────────────────────────────────────────────────────────────
 export type User = {
   id:    string
   name:  string
@@ -30,84 +18,69 @@ export type User = {
 type AuthContextType = {
   user:            User | null
   token:           string | null
-  isLoading:       boolean   // กำลังโหลดอยู่ (ตอน app boot)
-  isAuthenticated: boolean   // login แล้วหรือยัง
+  isLoading:       boolean
+  isAuthenticated: boolean
   login:           (token: string, userData?: User) => Promise<User>
   logout:          () => void
 }
 
-// ── Context ───────────────────────────────────────────────────────────
 const AuthContext = createContext<AuthContextType | null>(null)
 
-// ── Provider ──────────────────────────────────────────────────────────
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user,      setUser]      = useState<User | null>(null)
   const [token,     setToken]     = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  /**
-   * ตอน app เริ่มต้น → เช็คว่ามี token ค้างอยู่ใน localStorage ไหม
-   * ถ้ามี → ดึงข้อมูล user จาก API
-   */
   useEffect(() => {
-    const stored = localStorage.getItem('nj_token')
-    if (stored) {
-      fetchUser(stored).finally(() => setIsLoading(false))
-    } else {
-      setIsLoading(false)
+    const storedToken = localStorage.getItem('nj_token')
+    const storedUser  = localStorage.getItem('nj_user')  // ← อ่าน user ด้วย
+
+    if (storedToken && storedUser) {
+      try {
+        // ✅ อ่านจาก localStorage เลย ไม่ต้องเรียก API
+        const parsedUser = JSON.parse(storedUser) as User
+        setUser(parsedUser)
+        setToken(storedToken)
+      } catch {
+        // ถ้า parse ไม่ได้ → clear ทั้งหมด
+        localStorage.removeItem('nj_token')
+        localStorage.removeItem('nj_user')
+        document.cookie = 'nj_token=; path=/; max-age=0'
+      }
     }
+
+    setIsLoading(false)
   }, [])
 
-  /** ดึงข้อมูล user จาก API ด้วย token */
-  const fetchUser = async (tkn: string) => {
-    try {                                          // ← เพิ่ม try-catch
-      const res = await fetch(`${API_URL}/auth/me`, {
-        headers: { Authorization: `Bearer ${tkn}` },
-      })
-      if (!res.ok) {
-        localStorage.removeItem('nj_token')
-        document.cookie = 'nj_token=; path=/; max-age=0'
-        return
-      }
-      const { data } = await res.json()
-      setUser(data)
-      setToken(tkn)
-    } catch {
-      // network error → ลบ token เงียบๆ ไม่ crash
-      localStorage.removeItem('nj_token')
-      document.cookie = 'nj_token=; path=/; max-age=0'
-    }
-  }
-
-
-  /**
-   * login(token) → เรียกหลังได้ token จาก OAuth callback
-   * return: User object (สำหรับ redirect ตาม role)
-   */
   const login = async (tkn: string, userData?: User): Promise<User> => {
-  localStorage.setItem('nj_token', tkn)
-  document.cookie = `nj_token=${tkn}; path=/; max-age=604800; SameSite=Lax`
+    if (userData) {
+      // ✅ มี userData → เก็บเลย ไม่ต้องเรียก API
+      localStorage.setItem('nj_token', tkn)
+      localStorage.setItem('nj_user', JSON.stringify(userData)) // ← เก็บ user ด้วย
+      document.cookie = `nj_token=${tkn}; path=/; max-age=604800; SameSite=Lax`
+      setUser(userData)
+      setToken(tkn)
+      return userData
+    }
 
-  // ถ้ามี userData ส่งมาตรงๆ → ใช้เลย ไม่ต้องเรียก /auth/me อีกรอบ
-  if (userData) {
-    setUser(userData)
+    // กรณีไม่มี userData → เรียก /auth/me
+    const res = await fetch(`${API_URL}/auth/me`, {
+      headers: { Authorization: `Bearer ${tkn}` },
+    })
+    if (!res.ok) throw new Error('Invalid token')
+
+    const { data } = await res.json()
+    localStorage.setItem('nj_token', tkn)
+    localStorage.setItem('nj_user', JSON.stringify(data)) // ← เก็บ user ด้วย
+    document.cookie = `nj_token=${tkn}; path=/; max-age=604800; SameSite=Lax`
+    setUser(data)
     setToken(tkn)
-    return userData
+    return data
   }
 
-  const res = await fetch(`${API_URL}/auth/me`, {
-    headers: { Authorization: `Bearer ${tkn}` },
-  })
-  if (!res.ok) throw new Error('Invalid token')
-  const { data } = await res.json()
-  setUser(data)
-  setToken(tkn)
-  return data
-}
-
-  /** logout → ลบ token และ redirect กลับหน้าแรก */
   const logout = () => {
     localStorage.removeItem('nj_token')
+    localStorage.removeItem('nj_user') // ← ลบ user ด้วย
     document.cookie = 'nj_token=; path=/; max-age=0'
     setUser(null)
     setToken(null)
@@ -128,7 +101,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   )
 }
 
-// ── Hook ──────────────────────────────────────────────────────────────
 export function useAuth() {
   const ctx = useContext(AuthContext)
   if (!ctx) throw new Error('useAuth ต้องใช้ภายใน <AuthProvider>')

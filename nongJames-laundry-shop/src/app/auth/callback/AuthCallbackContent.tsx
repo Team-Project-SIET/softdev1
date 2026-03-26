@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth, type User } from '@/contexts/AuthContext'
 
@@ -8,22 +8,10 @@ const ROLE_REDIRECT: Record<string, string> = {
   admin:     '/admin/dashboard',
   driver:    '/driver/tasks',
   executive: '/executive/finance',
-  customer:  '/orders',
+  customer:  '/',
 }
 
-function LoadingScreen() {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-stone-50">
-      <div className="text-center">
-        <div className="w-12 h-12 border-4 border-gray-900 border-t-transparent rounded-full animate-spin mx-auto" />
-        <p className="text-gray-600 mt-4 text-sm font-medium">กำลังเข้าสู่ระบบ...</p>
-        <p className="text-gray-400 mt-1 text-xs">กรุณารอสักครู่</p>
-      </div>
-    </div>
-  )
-}
-
-function CallbackContent() {
+export default function AuthCallbackContent() {
   const router       = useRouter()
   const searchParams = useSearchParams()
   const { login }    = useAuth()
@@ -38,18 +26,19 @@ function CallbackContent() {
 
     if (error) {
       setStatus('error')
-      setErrMsg('เกิดข้อผิดพลาดในการเข้าสู่ระบบ')
+      setErrMsg('เกิดข้อผิดพลาดในการเข้าสู่ระบบ กรุณาลองใหม่')
       setTimeout(() => router.push('/login'), 3000)
       return
     }
 
     if (!token) {
       setStatus('error')
-      setErrMsg('ไม่พบ token กรุณาลองใหม่')
+      setErrMsg('ไม่พบ token กรุณาลองใหม่อีกครั้ง')
       setTimeout(() => router.push('/login'), 3000)
       return
     }
 
+    // Parse user จาก URL params
     let userData: User | undefined
     if (userParam) {
       try {
@@ -60,7 +49,9 @@ function CallbackContent() {
     }
 
     login(token, userData)
-      .then(user => router.push(ROLE_REDIRECT[user.role] || '/orders'))
+      .then(user => {
+        router.push(ROLE_REDIRECT[user.role] || '/orders')
+      })
       .catch(() => {
         setStatus('error')
         setErrMsg('Token ไม่ถูกต้อง กรุณาเข้าสู่ระบบใหม่')
@@ -83,13 +74,13 @@ function CallbackContent() {
     )
   }
 
-  return <LoadingScreen />
-}
-
-export default function AuthCallbackPage() {
   return (
-    <Suspense fallback={<LoadingScreen />}>
-      <CallbackContent />
-    </Suspense>
+    <div className="min-h-screen flex items-center justify-center bg-stone-50">
+      <div className="text-center">
+        <div className="w-12 h-12 border-4 border-gray-900 border-t-transparent rounded-full animate-spin mx-auto" />
+        <p className="text-gray-600 mt-4 text-sm font-medium">กำลังเข้าสู่ระบบ...</p>
+        <p className="text-gray-400 mt-1 text-xs">กรุณารอสักครู่</p>
+      </div>
+    </div>
   )
 }
