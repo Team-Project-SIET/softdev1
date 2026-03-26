@@ -1,14 +1,11 @@
 import { Elysia, t } from 'elysia';
 import { FinanceController } from './controllers';
-import { authPlugin, requireRole } from '../../middlewares/auth.middleware';
-
-const JWT_SECRET = process.env.JWT_SECRET!;
+import { requireRole } from '../../middlewares/auth.middleware';
 
 export function createFinanceRoutes() {
   const financeController = new FinanceController();
 
   return new Elysia({ prefix: '/api/finance' })
-    .use(authPlugin(JWT_SECRET))
 
     // ═══════════════════════════════════════════════════════════════════
     // PAYMENT ROUTES

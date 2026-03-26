@@ -1,14 +1,11 @@
 import { Elysia, t } from 'elysia';
 import { ServicesController } from './controllers/services.controller';
-import { authPlugin, requireRole } from '../../middlewares/auth.middleware';
-
-const JWT_SECRET = process.env.JWT_SECRET!;
+import { requireRole } from '../../middlewares/auth.middleware';
 
 export function createServicesRoutes() {
   const servicesController = new ServicesController();
 
   return new Elysia({ prefix: '/api/services' })
-    .use(authPlugin(JWT_SECRET))
 
     // ═══════════════════════════════════════════════════════════════════
     // PUBLIC / CUSTOMER ENDPOINTS (Any authenticated user)

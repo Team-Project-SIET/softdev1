@@ -1,14 +1,11 @@
 import { Elysia, t } from 'elysia';
 import { NotificationsController } from './controllers/notifications.controller';
-import { authPlugin, requireRole } from '../../middlewares/auth.middleware';
-
-const JWT_SECRET = process.env.JWT_SECRET!;
+import { requireRole } from '../../middlewares/auth.middleware';
 
 export function createNotificationsRoutes() {
   const notificationsController = new NotificationsController();
 
   return new Elysia({ prefix: '/api/notifications' })
-    .use(authPlugin(JWT_SECRET))
 
     // ═══════════════════════════════════════════════════════════════════
     // NOTIFICATION ENDPOINTS

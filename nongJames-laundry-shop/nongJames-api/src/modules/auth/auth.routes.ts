@@ -1,8 +1,6 @@
 import { Elysia, t } from 'elysia';
 import { AuthController } from './controllers';
-import { authPlugin, requireAuth } from '../../middlewares/auth.middleware';
-
-const JWT_SECRET = process.env.JWT_SECRET!;
+import { requireAuth } from '../../middlewares/auth.middleware';
 
 export function createAuthRoutes() {
   const authController = new AuthController();

@@ -1,14 +1,11 @@
 import { Elysia, t } from 'elysia';
 import { OrdersController } from './controllers';
-import { authPlugin, requireRole, requireAuth } from '../../middlewares/auth.middleware';
-
-const JWT_SECRET = process.env.JWT_SECRET!;
+import { requireRole, requireAuth } from '../../middlewares/auth.middleware';
 
 export function createOrderRoutes() {
   const ordersController = new OrdersController();
 
   return new Elysia({ prefix: '/api/orders' })
-    .use(authPlugin(JWT_SECRET))
 
     // Create order - Admin/Staff only
     .post('/', (ctx) => ordersController.createOrder(ctx.body, ctx), {

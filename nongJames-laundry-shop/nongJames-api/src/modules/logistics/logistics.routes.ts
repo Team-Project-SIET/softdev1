@@ -1,14 +1,11 @@
 import { Elysia, t } from 'elysia';
 import { LogisticsController } from './controllers';
-import { authPlugin, requireRole } from '../../middlewares/auth.middleware';
-
-const JWT_SECRET = process.env.JWT_SECRET!;
+import { requireRole } from '../../middlewares/auth.middleware';
 
 export function createLogisticsRoutes() {
   const logisticsController = new LogisticsController();
 
   return new Elysia({ prefix: '/api/logistics' })
-    .use(authPlugin(JWT_SECRET))
 
     // Driver management - Admin only
     .post('/drivers', (ctx) => logisticsController.createDriver(ctx.body), {

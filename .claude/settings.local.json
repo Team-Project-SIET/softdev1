@@ -9,7 +9,11 @@
       "Bash(curl:*)",
       "Bash(export TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJlODc5Y2RlMi0yNDRiLTRiNjMtOGNiZi1hZTI1YWIzZmJiZmMiLCJlbWFpbCI6InRlc3RAZXhhbXBsZS5jb20iLCJyb2xlIjoiQURNSU4iLCJleHAiOjE3NzUwNTY2MDYsImlhdCI6MTc3NDQ1MTg1MH0.OXYM7herbFuJab9S_ysEow69yNdpWTGDgsyYERZNx2I\")",
       "Bash(__NEW_LINE_e7a03571840873af__ curl:*)",
-      "Bash(__NEW_LINE_556bb9ca808fc1bb__ curl:*)"
+      "Bash(__NEW_LINE_556bb9ca808fc1bb__ curl:*)",
+      "Bash(bun:*)",
+      "Bash(tee /tmp/test_output.log pkill -f bun)",
+      "WebSearch",
+      "Bash(find /c/Users/Admin/Desktop/softdevpj1-2/softdev1/nongJames-laundry-shop -path */node_modules -prune -o -name *.test.ts -print)"
     ]
   }
 }
