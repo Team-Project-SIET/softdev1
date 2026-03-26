@@ -39,7 +39,8 @@ export function createAuthRoutes() {
     })
 
     // Protected routes below
-    .use(authPlugin(JWT_SECRET))
+    // NOTE: authPlugin is already applied globally in app.ts, no need to apply again
+    // .use(authPlugin(JWT_SECRET))
 
     // Logout - requires auth
     .post('/logout', (ctx) => authController.logout(ctx), {

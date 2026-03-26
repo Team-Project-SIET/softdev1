@@ -9,7 +9,13 @@
       "Bash(pg_isready -h localhost -p 5432)",
       "Bash(pg_isready -h localhost -p 5433)",
       "Bash(docker run:*)",
-      "Bash(docker rm:*)"
+      "Bash(docker rm:*)",
+      "Bash(bun -e \"import ''dotenv/config''; console.log\\(''JWT_SECRET loaded:'', process.env.JWT_SECRET ? ''YES \\(length: '' + process.env.JWT_SECRET.length + ''\\)'' : ''NO - NOT LOADED''\\)\")",
+      "Bash(tee register_response.json)",
+      "Bash(tee login_response.json)",
+      "Bash(tee /tmp/register_response.json)",
+      "Bash(bun:*)",
+      "Bash(tee /tmp/login2.json)"
     ]
   }
 }

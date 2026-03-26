@@ -25,8 +25,12 @@ export const authPlugin = (secret: string) =>
     .derive(async ({ bearer, jwt }) => {
       // bearer = token ที่ส่งมาใน Authorization: Bearer <token>
 
+      // DEBUG: Log incoming Authorization header
+      console.log('[AUTH DEBUG] Authorization header:', bearer ? `Bearer ${bearer.substring(0, 20)}...` : 'NOT PROVIDED')
+
       if (!bearer) {
         // ไม่มี token → user เป็น null (ยังไม่ได้ login)
+        console.log('[AUTH DEBUG] No bearer token, returning user: null')
         return { user: null as null | typeof users.$inferSelect }
       }
 
@@ -34,8 +38,15 @@ export const authPlugin = (secret: string) =>
         // verify() = ตรวจว่า token ถูกต้องและไม่หมดอายุ
         const payload = await jwt.verify(bearer) as JWTPayload | false
 
+        // DEBUG: Log verification result
+        console.log('[AUTH DEBUG] jwt.verify() result:', payload ? `VALID (userId: ${payload.userId})` : 'INVALID (false)')
+        if (payload) {
+          console.log('[AUTH DEBUG] Full payload:', JSON.stringify(payload))
+        }
+
         if (!payload) {
           // token ไม่ valid
+          console.log('[AUTH DEBUG] Token verification returned false, returning user: null')
           return { user: null as null | typeof users.$inferSelect }
         }
 
@@ -49,7 +60,9 @@ export const authPlugin = (secret: string) =>
 
         return { user }
 
-      } catch {
+      } catch (error) {
+        // DEBUG: Log any errors during verification
+        console.log('[AUTH DEBUG] jwt.verify() ERROR:', error instanceof Error ? error.message : error)
         return { user: null as null | typeof users.$inferSelect }
       }
     })
@@ -61,7 +74,9 @@ export const authPlugin = (secret: string) =>
 
 // requireAuth — บังคับว่าต้อง login ก่อน
 export const requireAuth = ({ user, set }: any) => {
+  console.log('[AUTH DEBUG] requireAuth called, user:', user ? `EXISTS (id: ${user.id})` : 'NULL')
   if (!user) {
+    console.log('[AUTH DEBUG] Returning 401 - Unauthorized')
     set.status = 401
     return { success: false, message: 'กรุณา Login ก่อนใช้งาน', data: null }
   }
