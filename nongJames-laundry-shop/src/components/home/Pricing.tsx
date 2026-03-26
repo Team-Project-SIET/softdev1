@@ -5,48 +5,33 @@ import Link from 'next/link'
 
 const PLANS = [
   {
-    name:     'Basic',
-    monthly:  199,
-    yearly:   1990,
-    desc:     'เหมาะสำหรับผู้เริ่มต้น',
-    color:    'bg-white',
+    name:      'Free',
+    monthly:   0,
+    yearly:    0,
+    desc:      'เริ่มต้นใช้งานฟรี ไม่มีค่าใช้จ่าย',
     highlight: false,
     features: [
-      { text: 'ส่วนลด 5% ทุก Order',     included: true  },
-      { text: 'ส่งฟรีทุกครั้ง',           included: false },
-      { text: 'แจ้งสถานะผ่าน LINE',       included: true  },
-      { text: 'Priority pick-up',          included: false },
-      { text: 'Account manager',           included: false },
+      { text: 'สั่งซักได้ไม่จำกัด',         included: true  },
+      { text: 'แจ้งสถานะผ่าน LINE',          included: true  },
+      { text: 'ค่าจัดส่ง 60 บาท/ครั้ง',      included: true  },
+      { text: 'ส่วนลดค่าซัก',                included: false },
+      { text: 'ส่งฟรีทุกครั้ง',              included: false },
+      { text: 'Priority pick-up',             included: false },
     ],
   },
   {
-    name:     'Monthly',
-    monthly:  299,
-    yearly:   2990,
-    desc:     'ยอดนิยม — คุ้มค่าที่สุด',
-    color:    'bg-gray-900',
+    name:      'Premium',
+    monthly:   299,
+    yearly:    2990,
+    desc:      'ยอดนิยม — คุ้มค่าที่สุด',
     highlight: true,
     features: [
-      { text: 'ส่วนลด 10% ทุก Order',     included: true },
-      { text: 'ส่งฟรีทุกครั้ง',           included: true },
-      { text: 'แจ้งสถานะผ่าน LINE',       included: true },
-      { text: 'Priority pick-up',          included: true },
-      { text: 'Account manager',           included: false},
-    ],
-  },
-  {
-    name:     'Yearly',
-    monthly:  249,
-    yearly:   2990,
-    desc:     'ประหยัดสุด — เหมาะรายปี',
-    color:    'bg-white',
-    highlight: false,
-    features: [
-      { text: 'ส่วนลด 20% ทุก Order',     included: true },
-      { text: 'ส่งฟรีทุกครั้ง',           included: true },
-      { text: 'แจ้งสถานะผ่าน LINE',       included: true },
-      { text: 'Priority pick-up',          included: true },
-      { text: 'Account manager',           included: true },
+      { text: 'สั่งซักได้ไม่จำกัด',         included: true },
+      { text: 'แจ้งสถานะผ่าน LINE',          included: true },
+      { text: 'ส่งฟรีทุกครั้ง',              included: true },
+      { text: 'ส่วนลดค่าซัก 15%',            included: true },
+      { text: 'Priority pick-up',             included: true },
+      { text: 'รับประกันความเสียหาย 10x',    included: true },
     ],
   },
 ]
@@ -56,7 +41,7 @@ export default function Pricing() {
 
   return (
     <section id="pricing" className="py-24 bg-stone-50">
-      <div className="max-w-7xl mx-auto px-8">
+      <div className="max-w-5xl mx-auto px-8">
 
         {/* Header */}
         <div className="text-center mb-16">
@@ -88,14 +73,14 @@ export default function Pricing() {
             </span>
             {isYearly && (
               <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-medium">
-                ประหยัด 17%
+                ประหยัด 2 เดือน!
               </span>
             )}
           </div>
         </div>
 
         {/* Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto">
           {PLANS.map(plan => (
             <div
               key={plan.name}
@@ -105,7 +90,7 @@ export default function Pricing() {
                   : 'bg-white border-gray-100 shadow-sm hover:shadow-md'
               }`}
             >
-              {/* Plan Header */}
+              {/* Header */}
               <div className="mb-8">
                 {plan.highlight && (
                   <span className="text-xs font-semibold bg-white/20 text-white px-3 py-1 rounded-full mb-3 inline-block">
@@ -121,20 +106,23 @@ export default function Pricing() {
 
                 {/* Price */}
                 <div className="flex items-baseline gap-1 mt-5">
-                  <span className={`text-5xl font-black ${plan.highlight ? 'text-white' : 'text-gray-900'}`}>
-                    ฿{isYearly
-                      ? plan.name === 'Yearly'
-                        ? (plan.yearly / 12).toFixed(0)
-                        : plan.monthly
-                      : plan.monthly
-                    }
-                  </span>
-                  <span className={`text-sm ${plan.highlight ? 'text-gray-400' : 'text-gray-400'}`}>
-                    /เดือน
-                  </span>
+                  {plan.monthly === 0 ? (
+                    <span className={`text-5xl font-black ${plan.highlight ? 'text-white' : 'text-gray-900'}`}>
+                      ฟรี
+                    </span>
+                  ) : (
+                    <>
+                      <span className={`text-5xl font-black ${plan.highlight ? 'text-white' : 'text-gray-900'}`}>
+                        ฿{isYearly ? Math.round(plan.yearly / 12) : plan.monthly}
+                      </span>
+                      <span className={`text-sm ${plan.highlight ? 'text-gray-400' : 'text-gray-400'}`}>
+                        /เดือน
+                      </span>
+                    </>
+                  )}
                 </div>
 
-                {isYearly && plan.name === 'Yearly' && (
+                {isYearly && plan.yearly > 0 && (
                   <p className="text-xs text-green-400 mt-1">
                     ชำระ ฿{plan.yearly.toLocaleString()} ต่อปี
                   </p>
@@ -172,14 +160,14 @@ export default function Pricing() {
 
               {/* CTA */}
               <Link
-                href="/register"
-                className={`w-full py-3 rounded-xl font-medium text-sm text-center transition-colors ${
+                href={plan.monthly === 0 ? '/register' : '/register?plan=premium'}
+                className={`w-full py-3.5 rounded-xl font-medium text-sm text-center transition-colors ${
                   plan.highlight
                     ? 'bg-white text-gray-900 hover:bg-gray-100'
                     : 'bg-gray-900 text-white hover:bg-gray-800'
                 }`}
               >
-                เลือกแพ็กเกจนี้
+                {plan.monthly === 0 ? 'เริ่มต้นฟรี' : 'อัปเกรดเป็น Premium'}
               </Link>
             </div>
           ))}
@@ -187,7 +175,7 @@ export default function Pricing() {
 
         {/* Note */}
         <p className="text-center text-gray-400 text-sm mt-10">
-          ✦ ทุกแพ็กเกจมีทดลองใช้ฟรี 7 วัน · ยกเลิกได้ทุกเวลา · ไม่คิดค่าธรรมเนียมแรกเข้า
+          ✦ ทดลองใช้ Premium ฟรี 7 วัน · ยกเลิกได้ทุกเวลา · ไม่มีค่าธรรมเนียมแรกเข้า
         </p>
 
       </div>
