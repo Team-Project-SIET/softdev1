@@ -282,10 +282,9 @@ export class LogisticsController {
    * Update driver location (placeholder - would need location tracking table)
    * POST /logistics/drivers/:driverId/location
    */
-  async updateLocation(body: any, context: any) {
+  async updateLocation(body: any, user: any) {
     try {
       const { latitude, longitude } = body;
-      const user = context.user;
 
       if (!user) {
         return { success: false, message: 'Unauthorized', data: null };
@@ -312,15 +311,13 @@ export class LogisticsController {
    * Update task status (for drivers)
    * PATCH /logistics/tasks/:id/status
    */
-  async updateTaskStatus(params: any, body: any, context: any) {
+  async updateTaskStatus(params: any, body: any, user: any) {
     try {
       const { id } = params;
       const { status } = body;
-      const user = context.user;
 
       if (!user) {
-        context.set.status = 401;
-        return { success: false, message: 'Unauthorized', data: null };
+        return { success: false, message: 'Unauthorized', data: null, status: 401 };
       }
 
       // Verify task exists and belongs to this driver
@@ -331,14 +328,12 @@ export class LogisticsController {
         .limit(1);
 
       if (!task) {
-        context.set.status = 404;
-        return { success: false, message: 'Task not found', data: null };
+        return { success: false, message: 'Task not found', data: null, status: 404 };
       }
 
       // Only allow the assigned driver or admin to update
       if (task.driverId !== user.id && user.role !== 'ADMIN') {
-        context.set.status = 403;
-        return { success: false, message: 'Not authorized to update this task', data: null };
+        return { success: false, message: 'Not authorized to update this task', data: null, status: 403 };
       }
 
       // Update task status

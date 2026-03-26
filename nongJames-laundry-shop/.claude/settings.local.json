@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bun src/index.ts)",
+      "Bash(curl:*)",
+      "Bash(bun drizzle-kit:*)",
+      "Bash(pkill -f \"bun src/index.ts\")",
+      "Bash(bun tsc:*)",
+      "Bash(pg_isready -h localhost -p 5432)",
+      "Bash(pg_isready -h localhost -p 5433)",
+      "Bash(docker run:*)",
+      "Bash(docker rm:*)"
+    ]
+  }
+}

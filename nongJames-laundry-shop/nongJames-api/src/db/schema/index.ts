@@ -40,7 +40,6 @@ export {
 } from './transactions';
 export * from './finance';
 export * from './expenses';
-export * from './driver-tasks';
 
 // B2B Contracts
 export * from './contracts';

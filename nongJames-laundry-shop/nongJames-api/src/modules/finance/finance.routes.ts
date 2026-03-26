@@ -15,7 +15,7 @@ export function createFinanceRoutes() {
     // ═══════════════════════════════════════════════════════════════════
 
     // Create payment record
-    .post('/payments', (ctx) => financeController.createPayment(ctx.body, ctx), {
+    .post('/payments', (ctx) => financeController.createPayment(ctx.body), {
       beforeHandle: [requireRole(['ADMIN', 'STAFF'])],
       body: t.Object({
         orderId: t.String(),
@@ -31,13 +31,13 @@ export function createFinanceRoutes() {
     })
 
     // Get payment by ID
-    .get('/payments/:id', (ctx) => financeController.getPayment(ctx.params, ctx), {
+    .get('/payments/:id', (ctx) => financeController.getPayment(ctx.params), {
       beforeHandle: [requireRole(['ADMIN', 'STAFF'])],
       params: t.Object({ id: t.String() }),
     })
 
     // Get payments for an order
-    .get('/orders/:orderId/payments', (ctx) => financeController.getOrderPayments(ctx.params, ctx), {
+    .get('/orders/:orderId/payments', (ctx) => financeController.getOrderPayments(ctx.params), {
       beforeHandle: [requireRole(['ADMIN', 'STAFF'])],
       params: t.Object({ orderId: t.String() }),
     })
@@ -47,7 +47,7 @@ export function createFinanceRoutes() {
     // ═══════════════════════════════════════════════════════════════════
 
     // Initiate SCB payment
-    .post('/payments/scb/initiate', (ctx) => financeController.initiateScbPayment(ctx.body, ctx), {
+    .post('/payments/scb/initiate', (ctx) => financeController.initiateScbPayment(ctx.body), {
       beforeHandle: [requireRole(['ADMIN', 'STAFF'])],
       body: t.Object({
         orderId: t.String(),
@@ -65,12 +65,12 @@ export function createFinanceRoutes() {
     })
 
     // Sync SCB transactions
-    .post('/transactions/sync', (ctx) => financeController.syncScbTransactions(ctx), {
+    .post('/transactions/sync', () => financeController.syncScbTransactions(), {
       beforeHandle: [requireRole(['ADMIN'])],
     })
 
     // Get bank transactions
-    .get('/transactions', (ctx) => financeController.getTransactions(ctx), {
+    .get('/transactions', () => financeController.getTransactions(), {
       beforeHandle: [requireRole(['ADMIN', 'EXECUTIVE'])],
     })
 
@@ -79,7 +79,7 @@ export function createFinanceRoutes() {
     // ═══════════════════════════════════════════════════════════════════
 
     // Create expense
-    .post('/expenses', (ctx) => financeController.createExpense(ctx.body, ctx.user, ctx), {
+    .post('/expenses', (ctx) => financeController.createExpense(ctx.body, ctx.user), {
       beforeHandle: [requireRole(['ADMIN', 'STAFF'])],
       body: t.Object({
         category: t.Union([
@@ -97,7 +97,7 @@ export function createFinanceRoutes() {
     })
 
     // Get expenses
-    .get('/expenses', (ctx) => financeController.getExpenses(ctx), {
+    .get('/expenses', () => financeController.getExpenses(), {
       beforeHandle: [requireRole(['ADMIN', 'EXECUTIVE'])],
     })
 
