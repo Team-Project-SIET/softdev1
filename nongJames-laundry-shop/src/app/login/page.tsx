@@ -3,13 +3,25 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
+import { useAuth } from '@/contexts/AuthContext'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
+const ROLE_REDIRECT: Record<string, string> = {
+  admin:     '/admin/dashboard',
+  driver:    '/driver/tasks',
+  executive: '/executive/finance',
+  customer:  '/orders',
+}
+
 export default function LoginPage() {
-  const [form, setForm] = useState({ email: '', password: '' })
+  const router     = useRouter()
+  const { login }  = useAuth()
+
+  const [form,    setForm]    = useState({ email: '', password: '' })
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const [error,   setError]   = useState('')
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
@@ -17,114 +29,88 @@ export default function LoginPage() {
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
-    try {
-      // TODO: เชื่อม API login employee (Step 2)
-      console.log('login with:', form)
-    } catch {
-      setError('อีเมลหรือรหัสผ่านไม่ถูกต้อง')
-    } finally {
-      setLoading(false)
+  e.preventDefault()
+  setLoading(true)
+  setError('')
+
+  try {
+    const res = await fetch(`${API_URL}/auth/login`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ email: form.email, password: form.password }),
+    })
+
+    const data = await res.json()
+
+    if (!res.ok) {
+      setError(data.message || 'เกิดข้อผิดพลาด')
+      return
     }
+
+    // ← ส่ง user data ตรงๆ ไม่ต้องเรียก /auth/me อีกรอบ
+    const user = await login(data.data.token, data.data.user)
+    router.push(ROLE_REDIRECT[user.role] || '/orders')
+
+  } catch (err) {
+    console.error('Login error:', err)
+    setError('เกิดข้อผิดพลาด กรุณาลองใหม่')
+  } finally {
+    setLoading(false)
+  }
   }
 
-  const handleLineLogin = () => {
-    window.location.href = `${API_URL}/auth/line`
-  }
-
-  const handleGoogleLogin = () => {
-    window.location.href = `${API_URL}/auth/google`
-  }
+  const handleLineLogin   = () => { window.location.href = `${API_URL}/auth/line`   }
+  const handleGoogleLogin = () => { window.location.href = `${API_URL}/auth/google` }
 
   return (
     <div className="min-h-screen flex">
 
-      {/* ═══ LEFT — Image Panel ═══════════════════════════════════════ */}
+      {/* Left */}
       <div className="hidden lg:flex w-3/5 relative overflow-hidden">
         <Image
           src="https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?w=1200&h=900&fit=crop"
-          alt="NongJames Laundry"
-          fill
-          className="object-cover"
-          priority
+          alt="NongJames" fill className="object-cover" priority
         />
-        {/* Dark Overlay */}
         <div className="absolute inset-0 bg-gray-900/55" />
-
-        {/* Content */}
         <div className="relative z-10 p-12 flex flex-col justify-between w-full">
-          {/* Logo */}
           <Link href="/" className="flex items-center gap-2 w-fit">
             <div className="w-9 h-9 bg-white rounded-xl flex items-center justify-center">
-              <span className="text-gray-900 text-xs font-bold tracking-tight">NJ</span>
+              <span className="text-gray-900 text-xs font-bold">NJ</span>
             </div>
             <span className="text-white font-bold text-lg">NongJames</span>
           </Link>
-
-          {/* Headline */}
           <div className="pb-8">
             <h2 className="text-4xl font-bold text-white leading-snug">
               ให้เราดูแลเสื้อผ้า<br />ตัวโปรดของคุณ
             </h2>
-            <p className="text-white/70 mt-5 leading-relaxed text-lg">
+            <p className="text-white/70 mt-5 leading-relaxed">
               สมัครสมาชิกวันนี้ เพื่อประสบการณ์<br />
               การซักรีดที่ง่ายกว่าเดิม<br />
-              สั่งงานผ่านเว็บ เช็คสถานะได้เรียลไทม์<br />
-              แล้วเอาเวลาไปทำสิ่งที่คุณรัก
+              สั่งงานผ่านเว็บ เช็คสถานะได้เรียลไทม์
             </p>
-
-            {/* Trust badges */}
-            <div className="flex items-center gap-6 mt-8">
-              {[
-                { num: '10,000+', label: 'ลูกค้า' },
-                { num: '4.9★',   label: 'รีวิว'  },
-                { num: '6 ชม.',  label: 'จัดส่ง' },
-              ].map(b => (
-                <div key={b.label}>
-                  <p className="text-white font-bold text-xl">{b.num}</p>
-                  <p className="text-white/50 text-xs">{b.label}</p>
-                </div>
-              ))}
-            </div>
           </div>
         </div>
       </div>
 
-      {/* ═══ RIGHT — Form Panel ══════════════════════════════════════ */}
+      {/* Right */}
       <div className="flex-1 flex flex-col items-center justify-center bg-white px-8 py-12">
-
-        {/* Mobile logo */}
-        <Link href="/" className="flex items-center gap-2 mb-8 lg:hidden">
-          <div className="w-9 h-9 bg-gray-900 rounded-xl flex items-center justify-center">
-            <span className="text-white text-xs font-bold">NJ</span>
-          </div>
-          <span className="text-gray-900 font-bold text-lg">NongJames</span>
-        </Link>
-
         <div className="w-full max-w-md">
 
-          {/* Title */}
           <div className="text-center mb-10">
             <h1 className="text-2xl font-bold text-gray-900">เข้าสู่ระบบ</h1>
             <p className="text-gray-400 mt-1 text-sm">เริ่มต้นประสบการณ์การบริการซัก</p>
           </div>
 
-          {/* Error */}
           {error && (
             <div className="mb-4 px-4 py-3 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm">
               {error}
             </div>
           )}
 
-          {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Email */}
+
             <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1.5">
-                อีเมล
-              </label>
+              <label className="block text-sm font-medium text-gray-600 mb-1.5">อีเมล</label>
               <input
                 type="email"
                 name="email"
@@ -136,11 +122,8 @@ export default function LoginPage() {
               />
             </div>
 
-            {/* Password */}
             <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1.5">
-                รหัสผ่าน
-              </label>
+              <label className="block text-sm font-medium text-gray-600 mb-1.5">รหัสผ่าน</label>
               <input
                 type="password"
                 name="password"
@@ -150,37 +133,38 @@ export default function LoginPage() {
                 className="w-full px-4 py-3.5 bg-gray-100 rounded-xl text-gray-900 placeholder-gray-400 text-sm outline-none focus:ring-2 focus:ring-gray-900 focus:bg-white transition-all"
                 required
               />
-              <div className="flex justify-end mt-2">
-                <Link href="/forgot-password" className="text-xs text-gray-400 hover:text-gray-600 transition-colors">
+              <div className="flex justify-end mt-1.5">
+                <button type="button" className="text-xs text-gray-400 hover:text-gray-600 transition-colors">
                   ลืมรหัสผ่าน?
-                </Link>
+                </button>
               </div>
             </div>
 
-            {/* Submit */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 bg-gray-900 text-white rounded-xl font-medium text-sm hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-full py-3.5 bg-gray-900 text-white rounded-xl font-medium text-sm hover:bg-gray-800 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
             >
-              {loading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ'}
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  กำลังเข้าสู่ระบบ...
+                </span>
+              ) : 'เข้าสู่ระบบ'}
             </button>
+
           </form>
 
-          {/* Divider */}
           <div className="flex items-center gap-4 my-6">
             <div className="flex-1 h-px bg-gray-100" />
             <span className="text-xs text-gray-400 font-medium tracking-widest">OR CONNECT VIA</span>
             <div className="flex-1 h-px bg-gray-100" />
           </div>
 
-          {/* OAuth Buttons */}
           <div className="space-y-3">
-            {/* LINE */}
             <button
-              type="button"
               onClick={handleLineLogin}
-              className="w-full py-3.5 rounded-xl font-medium text-sm text-white flex items-center justify-center gap-3 transition-opacity hover:opacity-90"
+              className="w-full py-3.5 rounded-xl font-medium text-sm text-white flex items-center justify-center gap-3 hover:opacity-90 transition-opacity"
               style={{ backgroundColor: '#06C755' }}
             >
               <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white">
@@ -189,9 +173,7 @@ export default function LoginPage() {
               Login with LINE OA
             </button>
 
-            {/* Google */}
             <button
-              type="button"
               onClick={handleGoogleLogin}
               className="w-full py-3.5 rounded-xl font-medium text-sm text-gray-700 bg-gray-50 border border-gray-200 flex items-center justify-center gap-3 hover:bg-gray-100 transition-colors"
             >
@@ -205,7 +187,6 @@ export default function LoginPage() {
             </button>
           </div>
 
-          {/* Register Link */}
           <p className="text-center mt-8 text-sm text-gray-400">
             ยังไม่มีบัญชี?{' '}
             <Link href="/register" className="text-gray-900 font-medium hover:underline">
@@ -215,7 +196,6 @@ export default function LoginPage() {
 
         </div>
       </div>
-
     </div>
   )
 }

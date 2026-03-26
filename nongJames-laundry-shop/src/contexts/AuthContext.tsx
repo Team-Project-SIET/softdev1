@@ -32,7 +32,7 @@ type AuthContextType = {
   token:           string | null
   isLoading:       boolean   // กำลังโหลดอยู่ (ตอน app boot)
   isAuthenticated: boolean   // login แล้วหรือยัง
-  login:           (token: string) => Promise<User>
+  login:           (token: string, userData?: User) => Promise<User>
   logout:          () => void
 }
 
@@ -60,39 +60,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   /** ดึงข้อมูล user จาก API ด้วย token */
   const fetchUser = async (tkn: string) => {
-    const res = await fetch(`${API_URL}/auth/me`, {
-      headers: { Authorization: `Bearer ${tkn}` },
-    })
-    if (!res.ok) {
-      // token หมดอายุหรือ invalid → ลบทิ้ง
+    try {                                          // ← เพิ่ม try-catch
+      const res = await fetch(`${API_URL}/auth/me`, {
+        headers: { Authorization: `Bearer ${tkn}` },
+      })
+      if (!res.ok) {
+        localStorage.removeItem('nj_token')
+        document.cookie = 'nj_token=; path=/; max-age=0'
+        return
+      }
+      const { data } = await res.json()
+      setUser(data)
+      setToken(tkn)
+    } catch {
+      // network error → ลบ token เงียบๆ ไม่ crash
       localStorage.removeItem('nj_token')
       document.cookie = 'nj_token=; path=/; max-age=0'
-      return
     }
-    const { data } = await res.json()
-    setUser(data)
-    setToken(tkn)
   }
+
 
   /**
    * login(token) → เรียกหลังได้ token จาก OAuth callback
    * return: User object (สำหรับ redirect ตาม role)
    */
-  const login = async (tkn: string): Promise<User> => {
-    // เก็บ token ลง localStorage (client) และ Cookie (middleware)
-    localStorage.setItem('nj_token', tkn)
-    document.cookie = `nj_token=${tkn}; path=/; max-age=604800; SameSite=Lax`
+  const login = async (tkn: string, userData?: User): Promise<User> => {
+  localStorage.setItem('nj_token', tkn)
+  document.cookie = `nj_token=${tkn}; path=/; max-age=604800; SameSite=Lax`
 
-    const res = await fetch(`${API_URL}/auth/me`, {
-      headers: { Authorization: `Bearer ${tkn}` },
-    })
-    if (!res.ok) throw new Error('Invalid token')
-
-    const { data } = await res.json()
-    setUser(data)
+  // ถ้ามี userData ส่งมาตรงๆ → ใช้เลย ไม่ต้องเรียก /auth/me อีกรอบ
+  if (userData) {
+    setUser(userData)
     setToken(tkn)
-    return data
+    return userData
   }
+
+  const res = await fetch(`${API_URL}/auth/me`, {
+    headers: { Authorization: `Bearer ${tkn}` },
+  })
+  if (!res.ok) throw new Error('Invalid token')
+  const { data } = await res.json()
+  setUser(data)
+  setToken(tkn)
+  return data
+}
 
   /** logout → ลบ token และ redirect กลับหน้าแรก */
   const logout = () => {

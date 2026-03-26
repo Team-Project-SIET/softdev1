@@ -1,19 +1,9 @@
 'use client'
 
-/**
- * หน้านี้รับ token จาก LINE/Google OAuth แล้ว:
- * 1. เก็บ token
- * 2. ดึงข้อมูล user
- * 3. redirect ตาม role
- *
- * URL ที่ได้รับ: /auth/callback?token=eyJhbGci...
- */
-
 import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useAuth } from '@/contexts/AuthContext'
+import { useAuth, type User } from '@/contexts/AuthContext'
 
-// redirect แต่ละ role ไปหน้าไหน
 const ROLE_REDIRECT: Record<string, string> = {
   admin:     '/admin/dashboard',
   driver:    '/driver/tasks',
@@ -29,30 +19,37 @@ export default function AuthCallbackPage() {
   const [errMsg, setErrMsg] = useState('')
 
   useEffect(() => {
-    const token = searchParams.get('token')
-    const error = searchParams.get('error')
+    const token    = searchParams.get('token')
+    const error    = searchParams.get('error')
+    const userParam = searchParams.get('user')
 
-    // มี error จาก OAuth
     if (error) {
       setStatus('error')
-      setErrMsg('เกิดข้อผิดพลาดในการเข้าสู่ระบบ กรุณาลองใหม่อีกครั้ง')
+      setErrMsg('เกิดข้อผิดพลาดในการเข้าสู่ระบบ')
       setTimeout(() => router.push('/login'), 3000)
       return
     }
 
-    // ไม่มี token
     if (!token) {
       setStatus('error')
-      setErrMsg('ไม่พบข้อมูล token กรุณาลองใหม่อีกครั้ง')
+      setErrMsg('ไม่พบ token กรุณาลองใหม่')
       setTimeout(() => router.push('/login'), 3000)
       return
     }
 
-    // login และ redirect ตาม role
-    login(token)
+    // ← parse user จาก URL (ไม่ต้องเรียก /auth/me อีกรอบ)
+    let userData: User | undefined
+    if (userParam) {
+      try {
+        userData = JSON.parse(decodeURIComponent(userParam)) as User
+      } catch {
+        userData = undefined
+      }
+    }
+
+    login(token, userData)
       .then(user => {
-        const redirect = ROLE_REDIRECT[user.role] || '/orders'
-        router.push(redirect)
+        router.push(ROLE_REDIRECT[user.role] || '/orders')
       })
       .catch(() => {
         setStatus('error')
@@ -61,7 +58,6 @@ export default function AuthCallbackPage() {
       })
   }, [])
 
-  // Loading
   if (status === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-stone-50">
@@ -74,7 +70,6 @@ export default function AuthCallbackPage() {
     )
   }
 
-  // Error
   return (
     <div className="min-h-screen flex items-center justify-center bg-stone-50">
       <div className="text-center bg-white rounded-2xl p-8 shadow-sm max-w-sm w-full mx-4">

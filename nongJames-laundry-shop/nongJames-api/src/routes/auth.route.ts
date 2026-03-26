@@ -126,7 +126,18 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
 
     // ⑤ ออก JWT แล้ว redirect ไป Frontend
     const token = await jwt.sign({ userId: user.id, role: user.role })
-    return Response.redirect(`${WEB}/auth/callback?token=${token}`, 302)
+
+    const userJson = encodeURIComponent(JSON.stringify({
+      id:    user.id,
+      name:  user.name,
+      email: user.email,
+      role:  user.role,
+    }))
+    return Response.redirect(
+      `${WEB}/auth/callback?token=${token}&user=${userJson}`,
+      302
+    )
+    
 
   } catch (err) {
     console.error('[LINE Callback Error]', err)
@@ -226,7 +237,17 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
 
       // ⑤ ออก JWT แล้ว redirect ไป Frontend
       const token = await jwt.sign({ userId: user.id, role: user.role })
-      return Response.redirect(`${WEB}/auth/callback?token=${token}`, 302)
+
+      const userJson = encodeURIComponent(JSON.stringify({
+        id:    user.id,
+        name:  user.name,
+        email: user.email,
+        role:  user.role,
+      }))
+      return Response.redirect(
+        `${WEB_URL}/auth/callback?token=${token}&user=${userJson}`,
+        302
+      )
 
     } catch (err) {
       console.error('[Google Callback Error]', err)
@@ -272,5 +293,133 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
     summary: '⚠️ Dev Only — Login ด้วย email',
     body: t.Object({
       email: t.String({ description: 'อีเมลของ user ใน seed' }),
+    }),
+  })
+    // ── POST /auth/register ───────────────────────────────────────────
+  .post('/register', async ({ body, jwt, set }) => {
+    const { name, email, password, phone, role } = body
+
+    // เช็คว่า email ซ้ำไหม
+    const existing = await db.select()
+      .from(users)
+      .where(eq(users.email, email))
+      .limit(1)
+      .then(r => r[0])
+
+    if (existing) {
+      set.status = 409
+      return {
+        success: false,
+        message: 'อีเมลนี้ถูกใช้งานแล้ว กรุณาใช้อีเมลอื่น',
+        data: null,
+      }
+    }
+
+    // Hash password ด้วย Bun built-in (ไม่ต้องติดตั้ง library เพิ่ม!)
+    const passwordHash = await Bun.password.hash(password, {
+      algorithm: 'bcrypt',
+      cost:      10,
+    })
+
+    // สร้าง user
+    const [user] = await db.insert(users).values({
+      name,
+      email,
+      passwordHash,
+      role: (role as any) || 'customer',
+    }).returning()
+
+    // สร้าง customer record ควบคู่
+    await db.insert(customers).values({
+      userId: user.id,
+      name,
+      phone:  phone || null,
+      type:   'b2c',
+    }).catch(() => {}) // ไม่ fail ถ้า insert ไม่สำเร็จ
+
+    // ออก JWT
+    const token = await jwt.sign({ userId: user.id, role: user.role })
+
+    set.status = 201
+    return {
+      success: true,
+      message: 'สมัครสมาชิกสำเร็จ',
+      data: {
+        token,
+        user: { id: user.id, name: user.name, email: user.email, role: user.role },
+      },
+    }
+  }, {
+    tags:    ['Auth'],
+    summary: 'สมัครสมาชิกด้วย Email + Password',
+    body: t.Object({
+      name:     t.String({ minLength: 2,  description: 'ชื่อ-นามสกุล'   }),
+      email:    t.String({ format: 'email', description: 'อีเมล'         }),
+      password: t.String({ minLength: 8,  description: 'รหัสผ่าน 8+ ตัว' }),
+      phone:    t.Optional(t.String({ description: 'เบอร์โทรศัพท์' })),
+      role:     t.Optional(t.String({ description: 'ตำแหน่ง (default: customer)' })),
+    }),
+  })
+
+  // ── POST /auth/login ──────────────────────────────────────────────
+  .post('/login', async ({ body, jwt, set }) => {
+    const { email, password } = body
+
+    // หา user จาก email
+    const user = await db.select()
+      .from(users)
+      .where(eq(users.email, email))
+      .limit(1)
+      .then(r => r[0])
+
+    // ไม่พบ user
+    if (!user) {
+      set.status = 401
+      return {
+        success: false,
+        message: 'ไม่พบบัญชีนี้ในระบบ กรุณาตรวจสอบอีเมล',
+        data: null,
+      }
+    }
+
+    // user นี้ใช้ OAuth (ไม่มี password)
+    if (!user.passwordHash) {
+      set.status = 401
+      return {
+        success: false,
+        message: 'บัญชีนี้ใช้การเข้าสู่ระบบผ่าน LINE หรือ Google กรุณากดปุ่มด้านล่าง',
+        data: null,
+      }
+    }
+
+    // ตรวจสอบ password
+    const isValid = await Bun.password.verify(password, user.passwordHash)
+
+    if (!isValid) {
+      set.status = 401
+      return {
+        success: false,
+        message: 'รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง',
+        data: null,
+      }
+    }
+
+    // ออก JWT
+    const token = await jwt.sign({ userId: user.id, role: user.role })
+
+    return {
+      success: true,
+      message: 'เข้าสู่ระบบสำเร็จ',
+      data: {
+        token,
+        user: { id: user.id, name: user.name, email: user.email, role: user.role },
+      },
+    }
+  }, {
+    tags:    ['Auth'],
+    summary: 'Login ด้วย Email + Password',
+    body: t.Object({
+      email:    t.String({ format: 'email', description: 'อีเมล'    }),
+      password: t.String({ minLength: 1,    description: 'รหัสผ่าน' }),
     }),
   })
