@@ -1,4 +1,8 @@
 import 'dotenv/config'
+import { config } from 'dotenv'
+config({ path: '../.env' })
+console.log('JWT_SECRET:', process.env.JWT_SECRET ? '✅ loaded' : '❌ undefined')
+console.log('WEB_URL:', process.env.WEB_URL)
 import { Elysia } from 'elysia'
 import { cors } from '@elysiajs/cors'
 import { swagger } from '@elysiajs/swagger'
@@ -14,8 +18,10 @@ import { notificationRoutes } from './routes/notifications.route'
 
 const app = new Elysia()
   .use(cors({
-    origin:      process.env.WEB_URL || 'http://localhost:3000',
+    origin: process.env.WEB_URL || 'http://localhost:3000',
     credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   }))
   .use(swagger({
     path: '/swagger',

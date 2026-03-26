@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { AuthProvider } from '@/contexts/AuthContext'
+import Navbar from '@/components/home/Navbar'
 import './globals.css'
 
 export const metadata: Metadata = {
