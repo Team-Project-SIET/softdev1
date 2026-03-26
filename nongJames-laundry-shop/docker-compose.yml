@@ -34,39 +34,6 @@ services:
     depends_on:
       - postgres
     restart: unless-stopped
-  api:
-    build:
-      context: .
-      dockerfile: nongJames-api/Dockerfile
-    container_name: nj_api
-    env_file:
-      - .env
-    environment:
-      # ใน Docker ใช้ชื่อ service แทน localhost
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
-      PORT: 8000
-    ports:
-      - "8000:8000"
-    depends_on:
-      postgres:
-        condition: service_healthy
-    restart: unless-stopped
-  web:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: nj_web
-    env_file:
-      - .env
-    environment:
-      # ใน Docker frontend ติดต่อ API ผ่าน internal network
-      NEXT_PUBLIC_API_URL: http://api:8000
-      PORT: 3000
-    ports:
-      - "3000:3000"
-    depends_on:
-      - api
-    restart: unless-stopped
 
 volumes:
   postgres_data:
