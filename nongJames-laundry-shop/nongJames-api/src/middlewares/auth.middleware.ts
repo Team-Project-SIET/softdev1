@@ -11,7 +11,7 @@ export const authPlugin = () =>
       if (!bearer) return { user: null as any }
       try {
         const payload = await verifyToken(bearer)
-        if (!payload?.userId) return { user: null as any }
+        if (!payload || !payload.userId) return { user: null as any }
 
         const user = await db
           .select()
