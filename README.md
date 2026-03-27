@@ -19,14 +19,13 @@ nongJames Laundry Shop เป็นระบบจัดการบริกา
    - รายการ: Frontend: VUE + Backend: Node.js + Database: SQLite
    - บริการรองรับ: auth, customers, orders, payments, logistics, finance, notifications, services
 2. Use Case Diagram
-   - ผู้ใช้: Customer, Admin, Delivery
-   - กรณีใช้งาน: สั่งซัก, ติดตามสถานะ, จ่ายเงิน, ประเมิน
+   ![alt text](usecase.png)
 3. Activity Diagram
-   - กิจกรรมหลัก: เลือกบริการ → สร้างคำสั่งซื้อ → ชำระเงิน → ส่งงาน → ยืนยันรับ
-4. ER Diagram / FR Diagram
-   - ตารางหลัก: users, customers, services, orders, payments, logistics, finances, notifications
+   ![alt text](activi.png)
+4. ER Diagram 
+   ![alt text](11111.png)
 5. UX/UI
-   - navbar, hero, services, pricing, testimonials, checkout, จัดการ order dashboard
+   ![alt text](image.png)
 `
 
 ### 2.4 Tech Stack
@@ -50,3 +49,4 @@ nongJames Laundry Shop เป็นระบบจัดการบริกา
 - `nongJames-laundry-shop` (frontend + backend)
 - `nongJames-api/src/routes` (API endpoints)
 - `documents/PM.XX` (เอกสาร PM/SRS)
+
