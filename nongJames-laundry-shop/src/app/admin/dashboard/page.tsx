@@ -67,16 +67,13 @@ interface Activity {
 
 // ─── Status helpers ────────────────────────────────────────────────────────────
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
-  pending:     { label: "รอรับผ้า",      color: "bg-amber-100 text-amber-700" },
-  picked_up:   { label: "รับผ้าแล้ว",    color: "bg-blue-100 text-blue-700" },
-  washing:     { label: "กำลังซัก",      color: "bg-sky-100 text-sky-700" },
-  drying:      { label: "กำลังอบ",       color: "bg-orange-100 text-orange-700" },
-  ready:       { label: "พร้อมส่ง",      color: "bg-emerald-100 text-emerald-700" },
-  delivering:  { label: "กำลังส่ง",      color: "bg-violet-100 text-violet-700" },
-  delivered:   { label: "ซักเสร็จแล้ว", color: "bg-green-100 text-green-700" },
-  cancelled:   { label: "ยกเลิก",        color: "bg-red-100 text-red-700" },
-  overdue:     { label: "เลยกำหนด",     color: "bg-red-100 text-red-700" },
-};
+  pending_pickup:     { label: 'รอรับผ้า',    color: 'bg-amber-100 text-amber-700'   },
+  washing:            { label: 'กำลังซัก',    color: 'bg-sky-100 text-sky-700'       },
+  packing:            { label: 'กำลังแพ็ค',   color: 'bg-orange-100 text-orange-700' },
+  ready_for_delivery: { label: 'พร้อมส่ง',    color: 'bg-emerald-100 text-emerald-700'},
+  completed:          { label: 'เสร็จสิ้น',   color: 'bg-green-100 text-green-700'   },
+  cancelled:          { label: 'ยกเลิก',      color: 'bg-red-100 text-red-700'       },
+}
 
 const avatarColors = [
   "bg-blue-500", "bg-violet-500", "bg-emerald-500",
@@ -123,131 +120,157 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
 
   const fetchAll = useCallback(async () => {
-    setLoading(true);
-    try {
-      const token = localStorage.getItem("nj_token");
-      const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
+  setLoading(true)
+  try {
+    const token = localStorage.getItem('nj_token')
+    const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {}
 
-      const [ordersRes, paymentsRes, driversRes] = await Promise.all([
-        fetch(`${API}/orders?limit=100`, { headers }),
-        fetch(`${API}/payments?limit=100`, { headers }),
-        fetch(`${API}/customers?role=driver&limit=50`, { headers }).catch(() => ({ ok: false })),
-      ]);
+    // ← เรียกแค่ /orders เพราะมีข้อมูลครบ
+    const res = await fetch(`${API}/orders`, { headers })
+    if (!res.ok) { setLoading(false); return }
 
-      const ordersData = ordersRes.ok ? await ordersRes.json() : { data: [] };
-      const paymentsData = paymentsRes.ok ? await paymentsRes.json() : { data: [] };
+    const data = await res.json()
+    const orders: any[] = data?.data ?? []
 
-      const orders: any[] = ordersData?.data ?? ordersData?.orders ?? [];
-      const payments: any[] = paymentsData?.data ?? paymentsData?.payments ?? [];
+    // ─── Stats ──────────────────────────────────────────────────────
+    const today = new Date().toDateString()
 
-      // ─── Stats ──────────────────────────────────────────────────────────────
-      const today = new Date().toDateString();
-      const todayOrders = orders.filter((o) => new Date(o.created_at).toDateString() === today);
-      const waitingPickup = orders.filter((o) => o.status === "pending").length;
-      const inProgress = orders.filter((o) => ["washing", "drying", "picked_up"].includes(o.status)).length;
-      const revenueToday = payments
-        .filter((p) => new Date(p.created_at).toDateString() === today && p.status === "paid")
-        .reduce((s: number, p: any) => s + Number(p.amount ?? 0), 0);
+    const todayOrders   = orders.filter(o => new Date(o.createdAt).toDateString() === today)
+    const waitingPickup = orders.filter(o => o.status === 'pending_pickup').length
+    const inProgress    = orders.filter(o => ['washing', 'packing'].includes(o.status)).length
+    const revenueToday  = orders
+      .filter(o => new Date(o.createdAt).toDateString() === today && o.paymentStatus === 'paid')
+      .reduce((s: number, o: any) => s + Number(o.totalAmount ?? 0), 0)
 
-      setStats({ ordersToday: todayOrders.length, waitingPickup, inProgress, revenueToday });
+    setStats({ ordersToday: todayOrders.length, waitingPickup, inProgress, revenueToday })
 
-      // ─── Weekly chart ────────────────────────────────────────────────────────
-      const days = ["อา.", "จ.", "อ.", "พ.", "พฤ.", "ศ.", "ส."];
-      const weekMap: Record<number, { dry: number; press: number }> = {};
-      for (let i = 0; i < 7; i++) weekMap[i] = { dry: 0, press: 0 };
-      orders.forEach((o) => {
-        const day = new Date(o.created_at).getDay();
-        const serviceName: string = o.service_name ?? o.service?.name ?? "";
-        if (serviceName.includes("รีด") || serviceName.includes("press")) weekMap[day].press++;
-        else weekMap[day].dry++;
-      });
-      const weekly = days.map((label, i) => ({ day: label, dry: weekMap[i].dry, press: weekMap[i].press }));
-      // reorder Mon-Sun
-      const reordered = [...weekly.slice(1), weekly[0]];
-      setWeeklyData(reordered);
+    // ─── Weekly chart ────────────────────────────────────────────────
+    const days = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.']
+    const weekMap: Record<number, { dry: number; press: number }> = {}
+    for (let i = 0; i < 7; i++) weekMap[i] = { dry: 0, press: 0 }
 
-      // ─── Pending tasks ───────────────────────────────────────────────────────
-      const overdue = orders.filter(
-        (o) => o.scheduled_delivery && new Date(o.scheduled_delivery) < new Date() && !["delivered", "cancelled"].includes(o.status)
-      );
-      const pt: PendingTask[] = [
-        ...(overdue.length
-          ? [{ id: "t1", title: "ตรวจเช็คความเสียหาย", subtitle: `ออเดอร์ #${overdue[0]?.order_code ?? "???"}  ชุดลูกโทน`, priority: "urgent" as const }]
-          : []),
-        ...(waitingPickup > 0
-          ? [{ id: "t2", title: "โทรยืนยันเวลาจัดส่ง", subtitle: `${waitingPickup} รายการรอนัด`, priority: "normal" as const }]
-          : []),
-        { id: "t3", title: "อัพเดทคลังน้ำยาซักผ้า", subtitle: "น้ำยาซักสูตรนอนไบฝ้า", priority: "low" as const },
-      ];
-      setPendingTasks(pt);
+    orders.forEach(o => {
+      const day = new Date(o.createdAt).getDay()
+      // B2B = ซักแห้ง, B2C = ซักรีดปกติ
+      if (o.orderType === 'b2b') weekMap[day].dry++
+      else weekMap[day].press++
+    })
 
-      // ─── Urgent orders ───────────────────────────────────────────────────────
-      const urgent = orders
-        .filter((o) => !["delivered", "cancelled"].includes(o.status))
-        .sort((a, b) => new Date(a.scheduled_delivery ?? a.created_at).getTime() - new Date(b.scheduled_delivery ?? b.created_at).getTime())
-        .slice(0, 5);
+    const weekly = days.map((label, i) => ({ day: label, dry: weekMap[i].dry, press: weekMap[i].press }))
+    setWeeklyData([...weekly.slice(1), weekly[0]]) // Mon-Sun
 
-      setUrgentOrders(
-        urgent.map((o, i) => {
-          const name: string = o.customer_name ?? o.customer?.name ?? "ลูกค้า";
-          const dl = o.scheduled_delivery ?? o.updated_at;
-          const { text, urgent: dlUrgent } = formatDeadline(dl);
-          const statusInfo = STATUS_MAP[o.status] ?? { label: o.status, color: "bg-gray-100 text-gray-600" };
-          return {
-            id: o.id,
-            orderCode: o.order_code ?? `ORD-${String(o.id).slice(-4)}`,
-            customerName: name,
-            customerInitials: getInitials(name),
-            customerColor: avatarColors[i % avatarColors.length],
-            service: o.service_name ?? o.service?.name ?? "บริการซัก",
-            status: statusInfo.label,
-            statusColor: statusInfo.color,
-            deadline: text,
-            deadlineUrgent: dlUrgent,
-          };
-        })
-      );
+    // ─── Pending tasks ───────────────────────────────────────────────
+    const pt: PendingTask[] = []
 
-      // ─── Drivers (fake from users/customers with driver role) ──────────────
-      const driverData = (driversRes as any).ok ? await (driversRes as Response).json() : { data: [] };
-      const driverList: any[] = driverData?.data ?? driverData?.users ?? [];
-      setDrivers(
-        driverList.slice(0, 4).map((d: any) => ({
-          id: d.id,
-          name: d.name ?? d.email,
-          route: "เส้นทาง: สุขุมวิท 24-39",
-          status: Math.random() > 0.4 ? "ว่าง" : "กำลังส่ง",
-          taskCount: Math.floor(Math.random() * 5) + 1,
-          avatar: d.avatar_url,
-        }))
-      );
-
-      // ─── Activities ──────────────────────────────────────────────────────────
-      const recent = [...orders]
-        .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
-        .slice(0, 4);
-      const actColors = ["#3b82f6", "#f59e0b", "#10b981", "#6366f1"];
-      const actMessages = (o: any) => {
-        if (o.status === "delivered") return `ส่งเสร็จเรียบร้อย: ${o.customer_name ?? "ลูกค้า"}`;
-        if (o.status === "washing") return `ผ้า ${Math.floor(Math.random() * 3) + 1} พับ ตรวจสอบรอยเปื้อน`;
-        if (o.status === "pending") return `${o.customer_name ?? "ลูกค้า"} ชำระเงินเรียบร้อย`;
-        return `อัพเดทสถานะ: ${STATUS_MAP[o.status]?.label ?? o.status}`;
-      };
-      setActivities(
-        recent.map((o, i) => ({
-          id: o.id,
-          message: actMessages(o),
-          orderCode: `#${o.order_code ?? `ORD-${String(o.id).slice(-4)}`}`,
-          timeAgo: timeAgo(o.updated_at ?? o.created_at),
-          color: actColors[i % actColors.length],
-        }))
-      );
-    } catch (err) {
-      console.error("Dashboard fetch error:", err);
-    } finally {
-      setLoading(false);
+    const pendingCount = orders.filter(o => o.status === 'pending_pickup').length
+    if (pendingCount > 0) {
+      pt.push({ id: 't1', title: 'รอมอบหมาย Driver', subtitle: `${pendingCount} ออเดอร์รอรับผ้า`, priority: 'urgent' })
     }
-  }, []);
+
+    const washingCount = orders.filter(o => o.status === 'washing').length
+    if (washingCount > 0) {
+      pt.push({ id: 't2', title: 'กำลังซักผ้า', subtitle: `${washingCount} ออเดอร์กำลังซัก`, priority: 'normal' })
+    }
+
+    const unPaidCount = orders.filter(o => o.paymentStatus === 'pending' && o.status !== 'cancelled').length
+    if (unPaidCount > 0) {
+      pt.push({ id: 't3', title: 'รอชำระเงิน', subtitle: `${unPaidCount} ออเดอร์ยังไม่ชำระ`, priority: 'low' })
+    }
+
+    if (pt.length === 0) {
+      pt.push({ id: 't0', title: 'ทุกอย่างเรียบร้อย 🎉', subtitle: 'ไม่มีงานค้าง', priority: 'low' })
+    }
+
+    setPendingTasks(pt)
+
+    // ─── Urgent orders (ที่ยังดำเนินการอยู่) ──────────────────────────
+    const activeOrders = orders
+      .filter(o => !['completed', 'cancelled'].includes(o.status))
+      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+      .slice(0, 5)
+
+    setUrgentOrders(
+      activeOrders.map((o, i) => {
+        const name: string = o.customerName ?? 'ลูกค้า'
+        const { text, urgent: dlUrgent } = formatDeadline(o.createdAt)
+        const statusInfo = STATUS_MAP[o.status] ?? { label: o.status, color: 'bg-gray-100 text-gray-600' }
+        return {
+          id:               o.id,
+          orderCode:        o.orderNumber ?? `ORD-${String(o.id).slice(-4)}`,
+          customerName:     name,
+          customerInitials: getInitials(name),
+          customerColor:    avatarColors[i % avatarColors.length],
+          service:          o.orderType === 'b2b' ? 'B2B ซักอบ' : 'B2C ซักพับ',
+          status:           statusInfo.label,
+          statusColor:      statusInfo.color,
+          deadline:         text,
+          deadlineUrgent:   dlUrgent,
+        }
+      })
+    )
+
+    // ─── Drivers (ดึงจาก logistics tasks) ─────────────────────────────
+    const logRes = await fetch(`${API}/logistics/tasks`, { headers }).catch(() => null)
+    if (logRes?.ok) {
+      const logData = await logRes.json()
+      const tasks: any[] = logData?.data ?? []
+
+      // group by driver
+      const driverMap: Record<string, { name: string; count: number; status: string }> = {}
+      tasks.forEach(t => {
+        if (!driverMap[t.driverId ?? t.driver_id]) {
+          driverMap[t.driverId ?? t.driver_id] = {
+            name:   t.driverName ?? 'Driver',
+            count:  0,
+            status: t.status,
+          }
+        }
+        driverMap[t.driverId ?? t.driver_id].count++
+      })
+
+      setDrivers(
+        Object.entries(driverMap).slice(0, 4).map(([id, d]) => ({
+          id,
+          name:      d.name,
+          route:     'เส้นทาง: ลาดกระบัง',
+          status:    d.status === 'in_progress' ? 'กำลังส่ง' : 'ว่าง',
+          taskCount: d.count,
+        }))
+      )
+    }
+
+    // ─── Activities ────────────────────────────────────────────────────
+    const STATUS_TH: Record<string, string> = {
+      pending_pickup:     'รอรับผ้า',
+      washing:            'กำลังซัก',
+      packing:            'กำลังแพ็ค',
+      ready_for_delivery: 'พร้อมส่ง',
+      completed:          'ส่งคืนแล้ว',
+      cancelled:          'ยกเลิก',
+    }
+
+    const actColors = ['#3b82f6', '#f59e0b', '#10b981', '#6366f1']
+    const recent = [...orders]
+      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+      .slice(0, 4)
+
+    setActivities(
+      recent.map((o, i) => ({
+        id:        o.id,
+        message:   `${o.customerName ?? 'ลูกค้า'} → ${STATUS_TH[o.status] ?? o.status}`,
+        orderCode: `#${o.orderNumber ?? o.id.slice(0, 8)}`,
+        timeAgo:   timeAgo(o.updatedAt ?? o.createdAt),
+        color:     actColors[i % actColors.length],
+      }))
+    )
+
+  } catch (err) {
+    console.error('Dashboard fetch error:', err)
+  } finally {
+    setLoading(false)
+  }
+}, [])
+
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
