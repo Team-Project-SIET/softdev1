@@ -18,17 +18,12 @@ import { notificationRoutes } from './routes/notifications.route'
 
 const app = new Elysia()
   .use(cors({
-  origin: (origin) => {
-    // ยอมรับทุก localhost
-    if (!origin) return true
-    if (origin.includes('localhost')) return true
-    return false
-  },
-  credentials:    true,
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
-  methods:        ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  exposeHeaders:  ['Authorization'],
-}))
+    // ← เปลี่ยนจาก function เป็น true (allow all ตอน dev)
+    origin:         true,
+    credentials:    true,
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    methods:        ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  }))
   .use(swagger({
     path: '/swagger',
     documentation: {
