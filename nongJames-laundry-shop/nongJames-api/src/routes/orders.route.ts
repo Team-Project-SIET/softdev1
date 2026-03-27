@@ -1,6 +1,6 @@
 import Elysia, { t } from 'elysia'
 import { eq, desc } from 'drizzle-orm'
-import { db, orders, orderItems, orderStatusHistory, customers } from '../db'
+import { db, orders, orderItems, orderStatusHistory, customers, users } from '../db'
 import { authPlugin, requireAuth, requireRole } from '../middlewares/auth.middleware'
 
 export const orderRoutes = new Elysia({ prefix: '/orders' })
@@ -155,3 +155,38 @@ export const orderRoutes = new Elysia({ prefix: '/orders' })
       note: t.Optional(t.String({ description: 'หมายเหตุการเปลี่ยนสถานะ' })),
     }),
   })
+
+  .get('/', async () => {
+  const result = await db
+    .select({
+      // ── orders fields ──────────────────────────────────────
+      id:             orders.id,
+      orderNumber:    orders.orderNumber,
+      status:         orders.status,
+      orderType:      orders.orderType,
+      totalAmount:    orders.totalAmount,
+      deliveryFee:    orders.deliveryFee,
+      discountAmount: orders.discountAmount,
+      paymentStatus:  orders.paymentStatus,
+      notes:          orders.notes,
+      createdAt:      orders.createdAt,
+      updatedAt:      orders.updatedAt,
+      // ── เพิ่ม customer info ────────────────────────────────
+      customerName:   customers.name,
+      customerPhone:  customers.phone,
+      customerId:     customers.id,
+    })
+    .from(orders)
+    .leftJoin(customers, eq(orders.customerId, customers.id)) // ← JOIN
+    .orderBy(desc(orders.createdAt))
+
+  return { success: true, message: 'ok', data: result }
+}, {
+  tags:    ['Orders'],
+  summary: 'ดูรายการ Orders ทั้งหมด',
+  detail:  {
+    description: '**Role:** admin, staff',
+    security: [{ BearerAuth: [] }],
+  },
+  beforeHandle: [requireRole(['admin', 'staff'])],
+})

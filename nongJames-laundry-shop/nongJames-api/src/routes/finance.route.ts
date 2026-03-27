@@ -1,6 +1,6 @@
 import Elysia, { t } from 'elysia'
 import { eq, gte, lte, and, sum, desc } from 'drizzle-orm'
-import { db, bankTransactions, expenses, payments, orders } from '../db'
+import { db, bankTransactions, expenses, payments, orders, users } from '../db'
 import { authPlugin, requireRole } from '../middlewares/auth.middleware'
 
 export const financeRoutes = new Elysia({ prefix: '/finance' })
@@ -183,3 +183,28 @@ export const financeRoutes = new Elysia({ prefix: '/finance' })
       receiptUrl:  t.Optional(t.String()),
     }),
   })
+// ── GET /finance/expenses ─────────────────────────────────────────────
+.get('/expenses', async () => {
+  const result = await db
+    .select({
+      id:          expenses.id,
+      category:    expenses.category,
+      description: expenses.description,
+      amount:      expenses.amount,
+      expenseDate: expenses.expenseDate,
+      receiptUrl:  expenses.receiptUrl,
+      createdAt:   expenses.createdAt,
+      // ── join users (บันทึกโดยใคร) ─────────────
+      createdByName:  users.name,
+      createdByEmail: users.email,
+    })
+    .from(expenses)
+    .leftJoin(users, eq(expenses.createdBy, users.id))
+    .orderBy(desc(expenses.expenseDate))
+
+  return { success: true, message: 'ok', data: result }
+}, {
+  tags: ['Finance'], summary: 'ดูรายจ่ายทั้งหมด',
+  detail: { security: [{ BearerAuth: [] }] },
+  beforeHandle: [requireRole(['admin', 'executive'])],
+})

@@ -1,24 +1,17 @@
 import Elysia from 'elysia'
 import { bearer } from '@elysiajs/bearer'
-import { jwt } from '@elysiajs/jwt'
 import { db, users } from '../db'
 import { eq } from 'drizzle-orm'
+import { verifyToken } from '../utils/jwt'
 
-export type JWTPayload = {
-  userId: string
-  role:   'admin' | 'driver' | 'executive' | 'customer'
-}
-
-export const authPlugin = (secret: string) =>
+export const authPlugin = () =>
   new Elysia({ name: 'auth-plugin' })
     .use(bearer())
-    .use(jwt({ name: 'jwt', secret }))
-    .derive(async ({ bearer, jwt }) => {
+    .derive(async ({ bearer }) => {
       if (!bearer) return { user: null as any }
-
       try {
-        const payload = await jwt.verify(bearer) as JWTPayload | false
-        if (!payload || !payload.userId) return { user: null as any }
+        const payload = await verifyToken(bearer)
+        if (!payload?.userId) return { user: null as any }
 
         const user = await db
           .select()

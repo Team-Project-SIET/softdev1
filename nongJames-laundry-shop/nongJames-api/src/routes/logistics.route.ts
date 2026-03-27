@@ -1,6 +1,6 @@
 import Elysia, { t } from 'elysia'
 import { eq, and } from 'drizzle-orm'
-import { db, driverTasks, orders, users } from '../db'
+import { db, driverTasks, orders, users, customers } from '../db'
 import { authPlugin, requireRole } from '../middlewares/auth.middleware'
 
 export const logisticsRoutes = new Elysia({ prefix: '/logistics' })
@@ -119,3 +119,71 @@ export const logisticsRoutes = new Elysia({ prefix: '/logistics' })
       ], { description: 'สถานะใหม่' }),
     }),
   })
+// ── GET /logistics/tasks ──────────────────────────────────────────────
+.get('/tasks', async () => {
+  const result = await db
+    .select({
+      id:          driverTasks.id,
+      taskType:    driverTasks.taskType,
+      status:      driverTasks.status,
+      assignedAt:  driverTasks.assignedAt,
+      completedAt: driverTasks.completedAt,
+      notes:       driverTasks.notes,
+      // ── join orders ─────────────────────────────
+      orderNumber:     orders.orderNumber,
+      orderStatus:     orders.status,
+      pickupAddress:   orders.pickupAddress,
+      deliveryAddress: orders.deliveryAddress,
+      // ── join users (driver) ──────────────────────
+      driverName:  users.name,
+      driverEmail: users.email,
+      // ── join customers ────────────────────────────
+      customerName:  customers.name,
+      customerPhone: customers.phone,
+    })
+    .from(driverTasks)
+    .innerJoin(orders,    eq(driverTasks.orderId,   orders.id))
+    .innerJoin(users,     eq(driverTasks.driverId,  users.id))
+    .leftJoin(customers,  eq(orders.customerId,     customers.id))
+
+  return { success: true, message: 'ok', data: result }
+}, {
+  tags: ['Logistics'], summary: 'ดู Tasks ทั้งหมด',
+  detail: { security: [{ BearerAuth: [] }] },
+  beforeHandle: [requireRole(['admin', 'staff'])],
+})
+
+// ── GET /logistics/tasks/my ───────────────────────────────────────────
+.get('/tasks/my', async ({ user, set }) => {
+  if (!user) return set.status = 401
+
+  const myTasks = await db
+    .select({
+      id:          driverTasks.id,
+      taskType:    driverTasks.taskType,
+      status:      driverTasks.status,
+      assignedAt:  driverTasks.assignedAt,
+      notes:       driverTasks.notes,
+      orderNumber:     orders.orderNumber,
+      pickupAddress:   orders.pickupAddress,
+      deliveryAddress: orders.deliveryAddress,
+      // ── join customers ────────────────────────────
+      customerName:  customers.name,
+      customerPhone: customers.phone,
+    })
+    .from(driverTasks)
+    .innerJoin(orders,   eq(driverTasks.orderId,  orders.id))
+    .leftJoin(customers, eq(orders.customerId,    customers.id))
+    .where(
+      and(
+        eq(driverTasks.driverId, user.id),
+        eq(driverTasks.status,   'assigned')
+      )
+    )
+
+  return { success: true, message: 'ok', data: myTasks }
+}, {
+  tags: ['Logistics'], summary: 'ดู Tasks ของ Driver ตัวเอง',
+  detail: { security: [{ BearerAuth: [] }] },
+  beforeHandle: [requireRole(['driver'])],
+})

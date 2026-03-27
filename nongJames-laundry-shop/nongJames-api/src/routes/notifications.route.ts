@@ -1,6 +1,6 @@
 import Elysia, { t } from 'elysia'
 import { eq, desc } from 'drizzle-orm'
-import { db, notifications, customers, oauthAccounts } from '../db'
+import { db, notifications, customers, orders, oauthAccounts } from '../db'
 import { authPlugin, requireRole } from '../middlewares/auth.middleware'
 
 // ── Helper: ส่ง LINE Push Message ─────────────────────────────────────
@@ -137,3 +137,32 @@ export const notificationRoutes = new Elysia({ prefix: '/notifications' })
     beforeHandle: [requireRole(['admin', 'staff'])],
     params: t.Object({ customerId: t.String() }),
   })
+// ── GET /notifications/:customerId ────────────────────────────────────
+.get('/:customerId', async ({ params }) => {
+  const result = await db
+    .select({
+      id:            notifications.id,
+      customerId:    notifications.customerId,
+      orderId:       notifications.orderId,
+      type:          notifications.type,
+      message:       notifications.message,
+      lineMessageId: notifications.lineMessageId,
+      status:        notifications.status,
+      sentAt:        notifications.sentAt,
+      createdAt:     notifications.createdAt,
+      // ── join orders ─────────────────────────────
+      orderNumber:   orders.orderNumber,
+      orderStatus:   orders.status,
+    })
+    .from(notifications)
+    .leftJoin(orders, eq(notifications.orderId, orders.id))
+    .where(eq(notifications.customerId, params.customerId))
+    .orderBy(desc(notifications.createdAt))
+
+  return { success: true, message: 'ok', data: result }
+}, {
+  tags: ['Notifications'], summary: 'ดูประวัติ Notification ของลูกค้า',
+  detail: { security: [{ BearerAuth: [] }] },
+  beforeHandle: [requireRole(['admin', 'staff'])],
+  params: t.Object({ customerId: t.String() }),
+})
