@@ -161,7 +161,7 @@ export default function AdminLogisticsPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50">
-                  {['Order','Driver','ประเภท','สถานะ','หมายเหตุ'].map(h => (
+                  {['Order', 'Driver', 'ประเภท', 'สถานะ', 'หมายเหตุ'].map(h => (
                     <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-500">{h}</th>
                   ))}
                 </tr>
@@ -173,7 +173,7 @@ export default function AdminLogisticsPage() {
                   <tr><td colSpan={5} className="text-center py-12 text-gray-400">ยังไม่มีงาน</td></tr>
                 ) : (
                   tasks.map((task, i) => (
-                    <tr key={task.id} className={`border-b border-gray-50 hover:bg-gray-50 ${i === tasks.length-1 ? 'border-0' : ''}`}>
+                    <tr key={task.id} className={`border-b border-gray-50 hover:bg-gray-50 ${i === tasks.length - 1 ? 'border-0' : ''}`}>
                       <td className="px-4 py-3 font-mono text-xs font-bold text-gray-900">
                         {task.orderNumber}
                       </td>
@@ -184,8 +184,22 @@ export default function AdminLogisticsPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`text-xs px-2 py-1 rounded-full font-medium ${STATUS_COLOR[task.status]}`}>
+                        <span className={`text-xs px-2 py-1 rounded-full font-medium ${STATUS_COLOR[task.status] || 'bg-gray-100 text-gray-700'}`}>
                           {task.status}
                         </span>
                       </td>
-                      <td className="px-
+                      <td className="px-4 py-3 text-gray-500 text-xs">
+                        {task.notes ? task.notes : <span className="text-gray-300">-</span>}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  )
+}

@@ -24,6 +24,7 @@ type Form = {
   washOnly:      boolean
   separateWhite: boolean
   notes:         string
+  addressNote: string 
 }
 
 // ── Toggle Component ──────────────────────────────────────────────────
@@ -84,6 +85,7 @@ export default function ProfilePage() {
     washOnly:      false,
     separateWhite: false,
     notes:         '',
+    addressNote: '',
   })
   const [loading, setSaving] = useState(false)
   const [toast,   setToast]  = useState('')
@@ -99,7 +101,7 @@ export default function ProfilePage() {
 
     // ดึงข้อมูล customer จาก API
     if (!token) return
-    fetch(`${API_URL}/auth/me`, {
+    fetch(`${API_URL}/auth/profile`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(r => r.json())
@@ -108,6 +110,8 @@ export default function ProfilePage() {
           const c = d.data
           setForm(prev => ({
             ...prev,
+            name:  d.data.name  || '',
+            email: d.data.email || '',
             phone: c.phone || '',
           }))
         }
@@ -120,29 +124,57 @@ export default function ProfilePage() {
   }
 
   const handleSave = async () => {
-    setSaving(true)
-    try {
-      // รวม address เป็น string
-      const address = [
-        form.houseNo,
-        form.building,
-        `ถนน${form.road}`,
-        `แขวง${form.subDistrict}`,
-        `เขต${form.district}`,
-        form.province,
-      ].filter(Boolean).join(' ')
+  // 🟢 1. ดึง Token สดๆ จากเครื่องตอนที่กดปุ่มเซฟเลย (กันเหนียว 100%)
+  const currentToken = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
 
-      // TODO: เรียก PATCH /customers/:id เมื่อมี endpoint
-      console.log('save:', { ...form, address })
-
-      setToast('บันทึกข้อมูลสำเร็จ!')
-      setTimeout(() => setToast(''), 3000)
-    } catch {
-      setToast('เกิดข้อผิดพลาด กรุณาลองใหม่')
-    } finally {
-      setSaving(false)
-    }
+  // 🟢 2. เช็คบัตร VIP ก่อน
+  if (!currentToken) {
+    setToast('❌ กรุณา Login ก่อนบันทึก')
+    setTimeout(() => setToast(''), 3000)
+    return
   }
+
+  setSaving(true)
+  try {
+    const res = await fetch(`${API_URL}/auth/profile`, {
+      method:  'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        // 🟢 3. ยื่นบัตร VIP (Token) ให้ยามหน้าประตูตรงนี้!
+        'Authorization': `Bearer ${currentToken}`, 
+      },
+      body: JSON.stringify({
+        name:        form.name,
+        phone:       form.phone,
+        houseNo:     form.houseNo,
+        building:    form.building,
+        road:        form.road,
+        subDistrict: form.subDistrict,
+        district:    form.district,
+        province:    form.province,
+      }),
+    })
+
+    const data = await res.json()
+
+    if (!res.ok) {
+      setToast(`❌ ${data.message || 'เกิดข้อผิดพลาด'}`)
+      setTimeout(() => setToast(''), 3000)
+      return
+    }
+
+    setToast('✅ บันทึกข้อมูลสำเร็จ!')
+    setTimeout(() => setToast(''), 3000)
+
+  } catch (err) {
+    console.error('Save error:', err)
+    setToast('❌ ไม่สามารถเชื่อมต่อ server ได้')
+    setTimeout(() => setToast(''), 3000)
+  } finally {
+    setSaving(false)
+  }
+}
+
 
   return (
     <div className="min-h-screen relative overflow-hidden">
@@ -326,6 +358,8 @@ export default function ProfilePage() {
                 <div className="mt-3">
                   <label className="text-xs text-gray-500 font-medium mb-1.5 block">หมายเหตุที่อยู่</label>
                   <textarea
+                    value={form.addressNote}
+                    onChange={e => setField('addressNote', e.target.value)}
                     placeholder="เช่น ฝากผ้าไว้ที่รปภ. แจ้งห้องเลข 123 ได้เลยครับ"
                     rows={2}
                     className="w-full px-3 py-2.5 bg-white/80 border border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-400 resize-none transition-all"
@@ -353,11 +387,12 @@ export default function ProfilePage() {
               </Link>
               <button
                 onClick={handleSave}
-                disabled={loading}
+                disabled={loading || !token}  // ← เพิ่ม !token
                 className="px-8 py-2.5 bg-gray-900 text-white text-sm font-medium rounded-xl hover:bg-gray-800 disabled:opacity-60 transition-colors"
               >
-                {loading ? 'กำลังบันทึก...' : 'บันทึกข้อมูล'}
+                {loading ? 'กำลังบันทึก...' : !token ? 'กำลังโหลด...' : 'บันทึกข้อมูล'}
               </button>
+
             </div>
           </div>
 

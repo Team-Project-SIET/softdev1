@@ -2,7 +2,7 @@ import Elysia, { t } from 'elysia'
 import { jwt } from '@elysiajs/jwt'
 import { eq } from 'drizzle-orm'
 import { db, users, customers, oauthAccounts } from '../db'
-import { authPlugin } from '../middlewares/auth.middleware'
+import { authPlugin,requireAuth } from '../middlewares/auth.middleware'
 
 const LINE = {
   clientId:     process.env.LINE_CLIENT_ID!,
@@ -27,7 +27,6 @@ const WEB_URL    = process.env.WEB_URL || 'http://localhost:3000'
 
 export const authRoutes = new Elysia({ prefix: '/auth' })
   .use(authPlugin(getSecret()))
-  .use(jwt({ name: 'jwt', secret: getSecret() }))
 
   // ── GET /auth/me ──────────────────────────────────────────────────
   .get('/me', ({ user, set }) => {
@@ -421,5 +420,91 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
     body: t.Object({
       email:    t.String({ format: 'email', description: 'อีเมล'    }),
       password: t.String({ minLength: 1,    description: 'รหัสผ่าน' }),
+    }),
+  })
+
+  // ── GET /auth/profile ─────────────────────────────────────────────────
+  // ดึงข้อมูล profile พร้อม phone + address
+  .get('/profile', async ({ user, set }) => {
+    if (!user) { set.status = 401; return { success: false, message: 'Unauthorized', data: null } }
+
+    const customer = await db.select()
+      .from(customers)
+      .where(eq(customers.userId, user.id))
+      .limit(1)
+      .then(r => r[0])
+
+    return {
+      success: true,
+      data: {
+        id:      user.id,
+        name:    user.name,
+        email:   user.email,
+        role:    user.role,
+        phone:   customer?.phone   || null,
+        address: customer?.address || null,
+      },
+    }
+  }, {
+    tags:    ['Auth'],
+    summary: 'ดึงข้อมูล Profile ของตัวเอง',
+    detail:  { security: [{ BearerAuth: [] }] },
+    beforeHandle: [requireAuth],
+  })
+
+  // ── PATCH /auth/profile ───────────────────────────────────────────────
+  // บันทึก profile (name + phone + address)
+  .patch('/profile', async ({ body, user, set }) => {
+    if (!user) { set.status = 401; return { success: false, message: 'Unauthorized', data: null } }
+
+    // อัปเดต name ใน users table
+    if (body.name) {
+      await db.update(users)
+        .set({ name: body.name, updatedAt: new Date() })
+        .where(eq(users.id, user.id))
+    }
+
+    // รวม address
+    const address = [
+      body.houseNo,
+      body.building,
+      body.road    ? `ถนน${body.road}`        : null,
+      body.subDistrict ? `แขวง${body.subDistrict}` : null,
+      body.district    ? `เขต${body.district}`     : null,
+      body.province,
+    ].filter(Boolean).join(' ') || null
+
+    // อัปเดต customer
+    const customer = await db.select()
+      .from(customers)
+      .where(eq(customers.userId, user.id))
+      .limit(1)
+      .then(r => r[0])
+
+    if (customer) {
+      await db.update(customers)
+        .set({
+          name:    body.name  || customer.name,
+          phone:   body.phone || null,
+          address: address    || customer.address,
+        })
+        .where(eq(customers.id, customer.id))
+    }
+
+    return { success: true, message: 'บันทึกข้อมูลสำเร็จ', data: null }
+  }, {
+    tags:    ['Auth'],
+    summary: 'บันทึก Profile ของตัวเอง',
+    detail:  { security: [{ BearerAuth: [] }] },
+    beforeHandle: [requireAuth],
+    body: t.Object({
+      name:        t.Optional(t.String()),
+      phone:       t.Optional(t.String()),
+      houseNo:     t.Optional(t.String()),
+      building:    t.Optional(t.String()),
+      road:        t.Optional(t.String()),
+      subDistrict: t.Optional(t.String()),
+      district:    t.Optional(t.String()),
+      province:    t.Optional(t.String()),
     }),
   })

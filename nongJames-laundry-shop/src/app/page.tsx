@@ -5,7 +5,7 @@ import Services    from '@/components/home/Services'
 import HowItWorks  from '@/components/home/HowItWorks'
 import WhyChoose   from '@/components/home/WhyChoose'
 import Testimonials from '@/components/home/Testimonials'
-import Pricing     from '@/components/home/Pricing'
+//import Pricing     from '@/components/home/Pricing'
 import Blog        from '@/components/home/Blog'
 import CTABanner   from '@/components/home/CTABanner'
 import Footer      from '@/components/home/Footer'
@@ -20,7 +20,7 @@ export default function HomePage() {
       <HowItWorks />
       <WhyChoose />
       <Testimonials />
-      <Pricing />
+      {/* <Pricing /> */}
       <Blog />
       <CTABanner />
       <Footer />
