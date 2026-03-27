@@ -39,13 +39,7 @@ nongJames Laundry Shop เป็นระบบจัดการบริกา
 - API Testing:
   - `POST /auth/login`, `GET /orders`, `POST /orders`, `POST /payments`
 
-## 3. การใช้งานเบื้องต้น
-1. ติดตั้ง dependencies ทั้ง `nongJames-api` และ root
-2. ตั้งค่า `.env` ให้ครบ
-3. `npm run dev` (frontend) และ `npm run dev` (backend)
-4. เปิด `http://localhost:3000`
-
-## 4. ลิงก์โฟลเดอร์สำคัญ
+## 3. ลิงก์โฟลเดอร์สำคัญ
 - `laundry-management-system` (Folder project)
 - `documents/PM.XX` (เอกสาร PM/SRS)
 
