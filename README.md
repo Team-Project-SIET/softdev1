@@ -46,7 +46,6 @@ nongJames Laundry Shop เป็นระบบจัดการบริกา
 4. เปิด `http://localhost:3000`
 
 ## 4. ลิงก์โฟลเดอร์สำคัญ
-- `nongJames-laundry-shop` (frontend + backend)
-- `nongJames-api/src/routes` (API endpoints)
+- `laundry-management-system` (Folder project)
 - `documents/PM.XX` (เอกสาร PM/SRS)
 
