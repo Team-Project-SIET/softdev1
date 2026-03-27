@@ -52,14 +52,51 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!token) return
-    fetch(`${API_URL}/orders/${params.id}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then(r => r.json())
-      .then(d => { if (d.success) setOrder(d.data) })
-      .finally(() => setLoading(false))
-  }, [token, params.id])
+  if (!token) return
+  const headers = { Authorization: `Bearer ${token}` }
+
+  const loadData = async () => {
+    try {
+      // ① ดึง orders ของตัวเอง
+      const ordersRes = await fetch(`${API_URL}/orders/my`, { headers })
+
+      // ② debug ถ้า 401
+      if (!ordersRes.ok) {
+        console.error('Orders/my status:', ordersRes.status)
+        if (ordersRes.status === 401) {
+          // Token expired → clear และ redirect
+          localStorage.removeItem('nj_token')
+          localStorage.removeItem('nj_user')
+          window.location.href = '/login'
+          return
+        }
+      }
+
+      const ordersData = await ordersRes.json()
+      if (ordersData.success) setOrders(ordersData.data || [])
+
+      // ③ ดึง user + customerId
+      const meRes  = await fetch(`${API_URL}/auth/me`, { headers }).then(r => r.json())
+      const customerId = meRes?.data?.customerId
+
+      // ④ ดึง subscription ถ้ามี customerId
+      if (customerId) {
+        const subRes = await fetch(
+          `${API_URL}/customers/${customerId}/subscription`,
+          { headers }
+        ).then(r => r.json())
+        if (subRes.success && subRes.data) setSub(subRes.data)
+      }
+
+    } catch (err) {
+      console.error('Load orders error:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  loadData()
+}, [token])
 
   const currentStepIdx = STEPS.findIndex(s => s.key === order?.status)
 

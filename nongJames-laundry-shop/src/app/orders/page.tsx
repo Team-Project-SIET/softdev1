@@ -176,7 +176,7 @@ export default function CustomerOrdersPage() {
               <p className="text-gray-500 font-medium">ยังไม่มีออเดอร์ที่กำลังดำเนินการ</p>
               <p className="text-gray-400 text-sm mt-1">สั่งซักได้เลยครับ!</p>
               <Link
-                href="/#services"
+                href="/booking"
                 className="inline-block mt-4 px-6 py-2.5 bg-gray-900 text-white text-sm rounded-xl hover:bg-gray-800 transition-colors"
               >
                 ดูบริการ

@@ -85,41 +85,43 @@ export default function PaymentPage() {
   }
 
   const handleConfirmPaid = async () => {
-    setLoading(true)
-    try {
-      // เรียก API สร้าง order (ถ้ามี token)
-      if (token && booking) {
-        const res = await fetch(`${API_URL}/orders`, {
-          method:  'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            // TODO: ใส่ customerId จริง
-            customerId:  'placeholder',
-            orderType:   'b2c',
-            pickupAddress: 'ที่อยู่ที่บันทึกไว้',
-            items: [{
-              serviceId: '50000000-0000-0000-0000-000000000001',
-              quantity:  booking.weight,
-              unitPrice: booking.unitPrice,
-            }],
-          }),
-        }).then(r => r.json())
-
-        if (res.success && res.data?.id) {
-          sessionStorage.setItem('nj_last_order_id', res.data.id)
+  setLoading(true)
+  try {
+    if (token && booking && booking.customerId) {
+      await fetch(`${API_URL}/orders`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization:  `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          // ← ไม่ต้องส่ง customerId เพราะ backend resolve เอง
+          orderType:     'b2c',
+          pickupAddress: 'ที่อยู่จากโปรไฟล์',
+          items: [{
+            serviceId: booking.serviceId === 'wash_fold'
+              ? '50000000-0000-0000-0000-000000000001'
+              : booking.serviceId === 'delicate'
+              ? '50000000-0000-0000-0000-000000000002'
+              : '50000000-0000-0000-0000-000000000003',
+            quantity:  booking.weight,
+            unitPrice: booking.unitPrice,
+          }],
+        }),
+      }).then(r => r.json()).then(data => {
+        if (data.success && data.data?.id) {
+          sessionStorage.setItem('nj_last_order_id', data.data.id)
         }
-      }
-
-      router.push('/booking/success')
-    } catch {
-      router.push('/booking/success')
-    } finally {
-      setLoading(false)
+      })
     }
+    router.push('/booking/success')
+  } catch {
+    router.push('/booking/success')
+  } finally {
+    setLoading(false)
   }
+}
+
 
   if (!booking) return null
 

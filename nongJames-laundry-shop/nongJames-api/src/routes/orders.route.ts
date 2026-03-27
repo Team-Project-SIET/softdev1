@@ -190,3 +190,77 @@ export const orderRoutes = new Elysia({ prefix: '/orders' })
   },
   beforeHandle: [requireRole(['admin', 'staff'])],
 })
+
+.post('/', async ({ body, user, set }) => {
+  const { customerId, orderType, pickupAddress, deliveryAddress, items } = body
+
+  // ถ้าเป็น customer → ใช้ customerId ของตัวเองเสมอ
+  let resolvedCustomerId = customerId
+  if (user!.role === 'customer') {
+    const customer = await db.select()
+      .from(customers)
+      .where(eq(customers.userId, user!.id))
+      .limit(1)
+      .then(r => r[0])
+    if (!customer) {
+      set.status = 404
+      return { success: false, message: 'ไม่พบข้อมูลลูกค้า', data: null }
+    }
+    resolvedCustomerId = customer.id  // ← override เสมอสำหรับ customer
+  }
+
+  const totalAmount = items.reduce((sum, i) => sum + i.quantity * i.unitPrice, 0)
+  const dateStr     = new Date().toISOString().slice(0, 10).replace(/-/g, '')
+  const seq         = Math.floor(Math.random() * 900 + 100)
+  const orderNumber = `NJ-${dateStr}-${seq}`
+
+  const [newOrder] = await db.insert(orders).values({
+    orderNumber,
+    customerId:      resolvedCustomerId,  // ← ใช้ resolvedCustomerId
+    createdBy:       user!.id,
+    orderType,
+    pickupAddress:   pickupAddress ?? null,
+    deliveryAddress: deliveryAddress ?? null,
+    totalAmount:     totalAmount.toString(),
+    status:          'pending_pickup',
+    paymentStatus:   'pending',
+  }).returning()
+
+  if (items.length > 0) {
+    await db.insert(orderItems).values(
+      items.map(i => ({
+        orderId:   newOrder.id,
+        serviceId: i.serviceId,
+        quantity:  i.quantity.toString(),
+        unitPrice: i.unitPrice.toString(),
+        subtotal:  (i.quantity * i.unitPrice).toString(),
+      }))
+    )
+  }
+
+  await db.insert(orderStatusHistory).values({
+    orderId:   newOrder.id,
+    changedBy: user!.id,
+    status:    'pending_pickup',
+    note:      'Order created',
+  })
+
+  set.status = 201
+  return { success: true, message: 'สร้าง Order สำเร็จ', data: newOrder }
+}, {
+  // ← เปลี่ยนจาก admin/staff → ให้ customer สั่งเองได้
+  beforeHandle: [requireAuth],
+  tags: ['Orders'], summary: 'สร้าง Order ใหม่',
+  detail: { security: [{ BearerAuth: [] }] },
+  body: t.Object({
+    customerId:      t.Optional(t.String()),  // ← optional สำหรับ customer
+    orderType:       t.Union([t.Literal('b2c'), t.Literal('b2b')]),
+    pickupAddress:   t.Optional(t.String()),
+    deliveryAddress: t.Optional(t.String()),
+    items: t.Array(t.Object({
+      serviceId: t.String(),
+      quantity:  t.Number(),
+      unitPrice: t.Number(),
+    })),
+  }),
+})
